@@ -77,6 +77,7 @@ final class KeystrokeLogger: ObservableObject {
         let logger = Unmanaged<KeystrokeLogger>.fromOpaque(refcon).takeUnretainedValue()
         
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            print("[KeystrokeLogger] Event tap was disabled, re-enabling...")
             if let tap = logger.eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
             }
@@ -114,6 +115,12 @@ final class KeystrokeLogger: ObservableObject {
         }
         
         DatabaseManager.shared.insertKeystroke(keystrokeEvent)
+        
+        #if DEBUG
+        let modDesc = modifiers.description.isEmpty ? "" : "[\(modifiers.description)] "
+        let charDesc = characters ?? "keyCode:\(keyCode)"
+        print("[KeystrokeLogger] \(modDesc)\(charDesc) in \(activeApp ?? "unknown")")
+        #endif
         
         return Unmanaged.passRetained(event)
     }

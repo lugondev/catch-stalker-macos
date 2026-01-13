@@ -7,6 +7,7 @@ struct LogsView: View {
     @State private var customStartDate = Calendar.current.startOfDay(for: Date())
     @State private var customEndDate = Date()
     @State private var showCustomDatePicker = false
+    @State private var refreshTrigger = UUID()
     
     enum DateRangeOption: String, CaseIterable {
         case last24Hours = "Last 24 Hours"
@@ -125,7 +126,7 @@ struct LogsView: View {
                     .frame(width: 100)
             }
             
-            Button(action: { }) {
+            Button(action: { refreshTrigger = UUID() }) {
                 Image(systemName: "arrow.clockwise")
             }
             .buttonStyle(.bordered)
@@ -138,18 +139,25 @@ struct LogsView: View {
         switch selectedLogType {
         case .keystrokes:
             KeystrokesLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+                .id(refreshTrigger)
         case .mouse:
             MouseLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+                .id(refreshTrigger)
         case .screenshots:
             ScreenshotsLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+                .id(refreshTrigger)
         case .camera:
             CameraLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+                .id(refreshTrigger)
         case .appHistory:
             AppHistoryLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+                .id(refreshTrigger)
         case .fileAccess:
             FileAccessLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+                .id(refreshTrigger)
         case .clipboard:
             ClipboardLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+                .id(refreshTrigger)
         }
     }
 }

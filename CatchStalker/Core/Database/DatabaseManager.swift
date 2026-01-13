@@ -1,6 +1,9 @@
 import Foundation
 import SQLite3
 
+// SQLITE_TRANSIENT tells SQLite to make its own copy of the string data
+private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+
 final class DatabaseManager {
     static let shared = DatabaseManager()
     
@@ -143,22 +146,34 @@ final class DatabaseManager {
             var statement: OpaquePointer?
             
             if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
-                sqlite3_bind_text(statement, 1, event.id.uuidString, -1, nil)
+                let idString = event.id.uuidString
+                idString.withCString { cString in
+                    sqlite3_bind_text(statement, 1, cString, -1, SQLITE_TRANSIENT)
+                }
                 sqlite3_bind_double(statement, 2, event.timestamp.timeIntervalSince1970)
                 sqlite3_bind_int(statement, 3, Int32(event.keyCode))
                 if let chars = event.characters {
-                    sqlite3_bind_text(statement, 4, chars, -1, nil)
+                    chars.withCString { cString in
+                        sqlite3_bind_text(statement, 4, cString, -1, SQLITE_TRANSIENT)
+                    }
                 } else {
                     sqlite3_bind_null(statement, 4)
                 }
                 sqlite3_bind_int(statement, 5, Int32(event.modifiers.rawValue))
                 if let app = event.activeApp {
-                    sqlite3_bind_text(statement, 6, app, -1, nil)
+                    app.withCString { cString in
+                        sqlite3_bind_text(statement, 6, cString, -1, SQLITE_TRANSIENT)
+                    }
                 } else {
                     sqlite3_bind_null(statement, 6)
                 }
                 
-                sqlite3_step(statement)
+                let result = sqlite3_step(statement)
+                if result != SQLITE_DONE {
+                    print("[DatabaseManager] ERROR: Failed to insert keystroke - \(String(cString: sqlite3_errmsg(db)))")
+                }
+            } else {
+                print("[DatabaseManager] ERROR: Failed to prepare keystroke insert - \(String(cString: sqlite3_errmsg(db)))")
             }
             sqlite3_finalize(statement)
         }
