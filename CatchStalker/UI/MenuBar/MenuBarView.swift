@@ -1,0 +1,282 @@
+import SwiftUI
+
+struct MenuBarView: View {
+    @StateObject private var settings = SettingsManager.shared
+    @StateObject private var permissions = PermissionsManager.shared
+    @StateObject private var antiSleep = AntiSleepManager.shared
+    
+    @StateObject private var keystrokeLogger = KeystrokeLogger.shared
+    @StateObject private var mouseTracker = MouseTracker.shared
+    @StateObject private var screenshotCapture = ScreenshotCapture.shared
+    @StateObject private var cameraCapture = CameraCapture.shared
+    @StateObject private var appHistoryTracker = AppHistoryTracker.shared
+    @StateObject private var fileAccessMonitor = FileAccessMonitor.shared
+    @StateObject private var clipboardMonitor = ClipboardMonitor.shared
+    
+    let openMainWindow: () -> Void
+    let quitApp: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            headerSection
+            
+            Divider()
+            
+            monitoringToggles
+            
+            Divider()
+            
+            antiSleepSection
+            
+            Divider()
+            
+            footerButtons
+        }
+        .padding()
+        .frame(width: 280)
+    }
+    
+    private var headerSection: some View {
+        HStack {
+            Image(systemName: "eye.fill")
+                .font(.title2)
+                .foregroundColor(.accentColor)
+            
+            Text("CatchStalker")
+                .font(.headline)
+            
+            Spacer()
+            
+            statusIndicator
+        }
+    }
+    
+    private var statusIndicator: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(isAnyModuleRunning ? Color.green : Color.gray)
+                .frame(width: 8, height: 8)
+            
+            Text(isAnyModuleRunning ? "Active" : "Idle")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var isAnyModuleRunning: Bool {
+        keystrokeLogger.isRunning ||
+        mouseTracker.isRunning ||
+        screenshotCapture.isRunning ||
+        cameraCapture.isRunning ||
+        appHistoryTracker.isRunning ||
+        fileAccessMonitor.isRunning ||
+        clipboardMonitor.isRunning
+    }
+    
+    private var monitoringToggles: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Monitoring")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            ModuleToggle(
+                icon: "keyboard",
+                title: "Keystroke",
+                isEnabled: $settings.settings.keystrokeEnabled,
+                isRunning: keystrokeLogger.isRunning
+            ) { enabled in
+                if enabled { KeystrokeLogger.shared.start() }
+                else { KeystrokeLogger.shared.stop() }
+            }
+            
+            ModuleToggle(
+                icon: "cursorarrow.motionlines",
+                title: "Mouse",
+                isEnabled: $settings.settings.mouseEnabled,
+                isRunning: mouseTracker.isRunning
+            ) { enabled in
+                if enabled { MouseTracker.shared.start() }
+                else { MouseTracker.shared.stop() }
+            }
+            
+            ModuleToggle(
+                icon: "camera.viewfinder",
+                title: "Screenshot",
+                isEnabled: $settings.settings.screenshotEnabled,
+                isRunning: screenshotCapture.isRunning
+            ) { enabled in
+                if enabled { ScreenshotCapture.shared.start() }
+                else { ScreenshotCapture.shared.stop() }
+            }
+            
+            ModuleToggle(
+                icon: "camera.fill",
+                title: "Camera",
+                isEnabled: $settings.settings.cameraEnabled,
+                isRunning: cameraCapture.isRunning
+            ) { enabled in
+                if enabled { CameraCapture.shared.start() }
+                else { CameraCapture.shared.stop() }
+            }
+            
+            ModuleToggle(
+                icon: "app.badge",
+                title: "App History",
+                isEnabled: $settings.settings.appHistoryEnabled,
+                isRunning: appHistoryTracker.isRunning
+            ) { enabled in
+                if enabled { AppHistoryTracker.shared.start() }
+                else { AppHistoryTracker.shared.stop() }
+            }
+            
+            ModuleToggle(
+                icon: "folder",
+                title: "File Access",
+                isEnabled: $settings.settings.fileAccessEnabled,
+                isRunning: fileAccessMonitor.isRunning
+            ) { enabled in
+                if enabled { FileAccessMonitor.shared.start() }
+                else { FileAccessMonitor.shared.stop() }
+            }
+            
+            ModuleToggle(
+                icon: "doc.on.clipboard",
+                title: "Clipboard",
+                isEnabled: $settings.settings.clipboardEnabled,
+                isRunning: clipboardMonitor.isRunning
+            ) { enabled in
+                if enabled { ClipboardMonitor.shared.start() }
+                else { ClipboardMonitor.shared.stop() }
+            }
+        }
+    }
+    
+    private var antiSleepSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Anti-Sleep")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            HStack {
+                Image(systemName: "moon.zzz.fill")
+                    .foregroundColor(antiSleep.isEnabled ? .orange : .gray)
+                
+                Text("Prevent Sleep")
+                
+                Spacer()
+                
+                if antiSleep.isEnabled && antiSleep.remainingTime > 0 {
+                    Text(antiSleep.formattedRemainingTime)
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                        .monospacedDigit()
+                }
+                
+                Toggle("", isOn: Binding(
+                    get: { antiSleep.isEnabled },
+                    set: { newValue in
+                        if newValue {
+                            antiSleep.enableGlobal()
+                        } else {
+                            antiSleep.disableGlobal()
+                        }
+                    }
+                ))
+                .toggleStyle(.switch)
+                .labelsHidden()
+            }
+            
+            if antiSleep.isEnabled {
+                HStack {
+                    Text("Duration:")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Picker("", selection: Binding(
+                        get: { antiSleep.selectedDuration },
+                        set: { antiSleep.enableWithDuration($0) }
+                    )) {
+                        ForEach(AntiSleepDuration.allCases, id: \.self) { duration in
+                            Text(duration.displayName).tag(duration)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            
+            if antiSleep.isActiveBySchedule {
+                HStack {
+                    Image(systemName: "calendar.badge.clock")
+                        .foregroundColor(.blue)
+                    Text("Active by schedule")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            if antiSleep.isActiveByApp {
+                HStack {
+                    Image(systemName: "app.fill")
+                        .foregroundColor(.purple)
+                    Text("Active by app rule")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+    
+    private var footerButtons: some View {
+        HStack {
+            Button(action: openMainWindow) {
+                HStack {
+                    Image(systemName: "macwindow")
+                    Text("Open Dashboard")
+                }
+            }
+            .buttonStyle(.bordered)
+            
+            Spacer()
+            
+            Button(action: quitApp) {
+                Image(systemName: "power")
+            }
+            .buttonStyle(.bordered)
+            .tint(.red)
+        }
+    }
+}
+
+struct ModuleToggle: View {
+    let icon: String
+    let title: String
+    @Binding var isEnabled: Bool
+    let isRunning: Bool
+    let onToggle: (Bool) -> Void
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .frame(width: 20)
+                .foregroundColor(isRunning ? .green : .gray)
+            
+            Text(title)
+                .font(.callout)
+            
+            Spacer()
+            
+            Toggle("", isOn: Binding(
+                get: { isEnabled },
+                set: { newValue in
+                    isEnabled = newValue
+                    onToggle(newValue)
+                }
+            ))
+            .toggleStyle(.switch)
+            .labelsHidden()
+            .controlSize(.small)
+        }
+    }
+}
