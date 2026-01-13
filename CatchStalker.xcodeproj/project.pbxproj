@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		259B9B6B85D43F736406F99E /* PermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 549D9BE6C7EB108C50A68EC6 /* PermissionsView.swift */; };
+		73026926FD867EF1A3D35372 /* PermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F235604C824512819683F75 /* PermissionsView.swift */; };
 		E80000001000000000000001 /* CatchStalkerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000001 /* CatchStalkerApp.swift */; };
 		E80000001000000000000002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000002 /* AppDelegate.swift */; };
 		E80000001000000000000003 /* DatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000003 /* DatabaseManager.swift */; };
@@ -34,7 +36,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		E80000003000000000000001 /* CatchStalker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CatchStalker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		549D9BE6C7EB108C50A68EC6 /* PermissionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PermissionsView.swift; sourceTree = "<group>"; };
+		6F235604C824512819683F75 /* PermissionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PermissionsView.swift; path = CatchStalker/UI/MainWindow/Permissions/PermissionsView.swift; sourceTree = "<group>"; };
 		E80000002000000000000001 /* CatchStalkerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatchStalkerApp.swift; sourceTree = "<group>"; };
 		E80000002000000000000002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E80000002000000000000003 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
@@ -61,6 +64,7 @@
 		E80000002000000000000024 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E80000002000000000000025 /* LaunchAtLoginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginManager.swift; sourceTree = "<group>"; };
 		E80000002000000000000026 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
+		E80000003000000000000001 /* CatchStalker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CatchStalker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +78,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7E88DD18377CCBC8A67D7899 /* Permissions */ = {
+			isa = PBXGroup;
+			children = (
+				549D9BE6C7EB108C50A68EC6 /* PermissionsView.swift */,
+			);
+			name = Permissions;
+			path = Permissions;
+			sourceTree = "<group>";
+		};
 		E80000005000000000000001 = {
 			isa = PBXGroup;
 			children = (
@@ -124,6 +137,38 @@
 			path = Core;
 			sourceTree = "<group>";
 		};
+		E80000005000000000000006 /* Modules */ = {
+			isa = PBXGroup;
+			children = (
+				E80000005000000000000012 /* Keystroke */,
+				E80000005000000000000013 /* Mouse */,
+				E80000005000000000000014 /* Screenshot */,
+				E80000005000000000000015 /* Camera */,
+				E80000005000000000000016 /* AppHistory */,
+				E80000005000000000000017 /* FileAccess */,
+				E80000005000000000000018 /* Clipboard */,
+				E80000005000000000000019 /* AntiSleep */,
+			);
+			path = Modules;
+			sourceTree = "<group>";
+		};
+		E80000005000000000000007 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				E80000005000000000000020 /* MenuBar */,
+				E80000005000000000000021 /* MainWindow */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		E80000005000000000000008 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E80000002000000000000019 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		E80000005000000000000009 /* Database */ = {
 			isa = PBXGroup;
 			children = (
@@ -150,21 +195,6 @@
 				E80000002000000000000026 /* ExportService.swift */,
 			);
 			path = Settings;
-			sourceTree = "<group>";
-		};
-		E80000005000000000000006 /* Modules */ = {
-			isa = PBXGroup;
-			children = (
-				E80000005000000000000012 /* Keystroke */,
-				E80000005000000000000013 /* Mouse */,
-				E80000005000000000000014 /* Screenshot */,
-				E80000005000000000000015 /* Camera */,
-				E80000005000000000000016 /* AppHistory */,
-				E80000005000000000000017 /* FileAccess */,
-				E80000005000000000000018 /* Clipboard */,
-				E80000005000000000000019 /* AntiSleep */,
-			);
-			path = Modules;
 			sourceTree = "<group>";
 		};
 		E80000005000000000000012 /* Keystroke */ = {
@@ -231,15 +261,6 @@
 			path = AntiSleep;
 			sourceTree = "<group>";
 		};
-		E80000005000000000000007 /* UI */ = {
-			isa = PBXGroup;
-			children = (
-				E80000005000000000000020 /* MenuBar */,
-				E80000005000000000000021 /* MainWindow */,
-			);
-			path = UI;
-			sourceTree = "<group>";
-		};
 		E80000005000000000000020 /* MenuBar */ = {
 			isa = PBXGroup;
 			children = (
@@ -255,6 +276,7 @@
 				E80000005000000000000022 /* Dashboard */,
 				E80000005000000000000023 /* Logs */,
 				E80000005000000000000024 /* Settings */,
+				7E88DD18377CCBC8A67D7899 /* Permissions */,
 			);
 			path = MainWindow;
 			sourceTree = "<group>";
@@ -281,14 +303,6 @@
 				E80000002000000000000017 /* SettingsView.swift */,
 			);
 			path = Settings;
-			sourceTree = "<group>";
-		};
-		E80000005000000000000008 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				E80000002000000000000019 /* Assets.xcassets */,
-			);
-			path = Resources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -383,6 +397,8 @@
 				E80000001000000000000022 /* CleanupService.swift in Sources */,
 				E80000001000000000000023 /* LaunchAtLoginManager.swift in Sources */,
 				E80000001000000000000024 /* ExportService.swift in Sources */,
+				73026926FD867EF1A3D35372 /* PermissionsView.swift in Sources */,
+				259B9B6B85D43F736406F99E /* PermissionsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

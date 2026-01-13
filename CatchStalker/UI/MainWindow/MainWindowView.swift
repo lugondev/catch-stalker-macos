@@ -8,12 +8,14 @@ struct MainWindowView: View {
     enum Tab: String, CaseIterable {
         case dashboard = "Dashboard"
         case logs = "Logs"
+        case permissions = "Permissions"
         case settings = "Settings"
         
         var icon: String {
             switch self {
             case .dashboard: return "chart.bar.fill"
             case .logs: return "list.bullet.rectangle"
+            case .permissions: return "lock.shield"
             case .settings: return "gear"
             }
         }
@@ -42,6 +44,8 @@ struct MainWindowView: View {
                 DashboardView()
             case .logs:
                 LogsView()
+            case .permissions:
+                PermissionsView()
             case .settings:
                 SettingsView()
             }

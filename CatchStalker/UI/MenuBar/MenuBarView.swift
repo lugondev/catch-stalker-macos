@@ -83,7 +83,9 @@ struct MenuBarView: View {
                 icon: "keyboard",
                 title: "Keystroke",
                 isEnabled: $settings.settings.keystrokeEnabled,
-                isRunning: keystrokeLogger.isRunning
+                isRunning: keystrokeLogger.isRunning,
+                isPermissionGranted: permissions.accessibilityGranted,
+                permissionName: "Accessibility"
             ) { enabled in
                 if enabled { KeystrokeLogger.shared.start() }
                 else { KeystrokeLogger.shared.stop() }
@@ -93,7 +95,9 @@ struct MenuBarView: View {
                 icon: "cursorarrow.motionlines",
                 title: "Mouse",
                 isEnabled: $settings.settings.mouseEnabled,
-                isRunning: mouseTracker.isRunning
+                isRunning: mouseTracker.isRunning,
+                isPermissionGranted: permissions.accessibilityGranted,
+                permissionName: "Accessibility"
             ) { enabled in
                 if enabled { MouseTracker.shared.start() }
                 else { MouseTracker.shared.stop() }
@@ -103,7 +107,9 @@ struct MenuBarView: View {
                 icon: "camera.viewfinder",
                 title: "Screenshot",
                 isEnabled: $settings.settings.screenshotEnabled,
-                isRunning: screenshotCapture.isRunning
+                isRunning: screenshotCapture.isRunning,
+                isPermissionGranted: permissions.screenRecordingGranted,
+                permissionName: "Screen Recording"
             ) { enabled in
                 if enabled { ScreenshotCapture.shared.start() }
                 else { ScreenshotCapture.shared.stop() }
@@ -113,7 +119,9 @@ struct MenuBarView: View {
                 icon: "camera.fill",
                 title: "Camera",
                 isEnabled: $settings.settings.cameraEnabled,
-                isRunning: cameraCapture.isRunning
+                isRunning: cameraCapture.isRunning,
+                isPermissionGranted: permissions.cameraGranted,
+                permissionName: "Camera"
             ) { enabled in
                 if enabled { CameraCapture.shared.start() }
                 else { CameraCapture.shared.stop() }
@@ -123,7 +131,9 @@ struct MenuBarView: View {
                 icon: "app.badge",
                 title: "App History",
                 isEnabled: $settings.settings.appHistoryEnabled,
-                isRunning: appHistoryTracker.isRunning
+                isRunning: appHistoryTracker.isRunning,
+                isPermissionGranted: true,
+                permissionName: nil
             ) { enabled in
                 if enabled { AppHistoryTracker.shared.start() }
                 else { AppHistoryTracker.shared.stop() }
@@ -133,7 +143,9 @@ struct MenuBarView: View {
                 icon: "folder",
                 title: "File Access",
                 isEnabled: $settings.settings.fileAccessEnabled,
-                isRunning: fileAccessMonitor.isRunning
+                isRunning: fileAccessMonitor.isRunning,
+                isPermissionGranted: true,
+                permissionName: nil
             ) { enabled in
                 if enabled { FileAccessMonitor.shared.start() }
                 else { FileAccessMonitor.shared.stop() }
@@ -143,7 +155,9 @@ struct MenuBarView: View {
                 icon: "doc.on.clipboard",
                 title: "Clipboard",
                 isEnabled: $settings.settings.clipboardEnabled,
-                isRunning: clipboardMonitor.isRunning
+                isRunning: clipboardMonitor.isRunning,
+                isPermissionGranted: true,
+                permissionName: nil
             ) { enabled in
                 if enabled { ClipboardMonitor.shared.start() }
                 else { ClipboardMonitor.shared.stop() }
@@ -254,29 +268,67 @@ struct ModuleToggle: View {
     let title: String
     @Binding var isEnabled: Bool
     let isRunning: Bool
+    let isPermissionGranted: Bool
+    let permissionName: String?
     let onToggle: (Bool) -> Void
     
+    @StateObject private var permissions = PermissionsManager.shared
+    
     var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .frame(width: 20)
-                .foregroundColor(isRunning ? .green : .gray)
-            
-            Text(title)
-                .font(.callout)
-            
-            Spacer()
-            
-            Toggle("", isOn: Binding(
-                get: { isEnabled },
-                set: { newValue in
-                    isEnabled = newValue
-                    onToggle(newValue)
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Image(systemName: icon)
+                    .frame(width: 20)
+                    .foregroundColor(isRunning ? .green : (isPermissionGranted ? .gray : .red))
+                
+                Text(title)
+                    .font(.callout)
+                
+                Spacer()
+                
+                if !isPermissionGranted {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .font(.caption)
                 }
-            ))
-            .toggleStyle(.switch)
-            .labelsHidden()
-            .controlSize(.small)
+                
+                Toggle("", isOn: Binding(
+                    get: { isEnabled && isPermissionGranted },
+                    set: { newValue in
+                        if isPermissionGranted {
+                            isEnabled = newValue
+                            onToggle(newValue)
+                        } else if newValue {
+                            requestPermission()
+                        }
+                    }
+                ))
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .controlSize(.small)
+            }
+            
+            if !isPermissionGranted, let permission = permissionName {
+                Text("Requires \(permission) permission")
+                    .font(.system(size: 9))
+                    .foregroundColor(.orange)
+                    .padding(.leading, 24)
+            }
+        }
+    }
+    
+    private func requestPermission() {
+        guard let permissionName = permissionName else { return }
+        
+        switch permissionName {
+        case "Accessibility":
+            permissions.requestAccessibilityPermission()
+        case "Screen Recording":
+            permissions.requestScreenRecordingPermission()
+        case "Camera":
+            permissions.requestCameraPermission()
+        default:
+            break
         }
     }
 }
