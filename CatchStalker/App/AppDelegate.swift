@@ -5,6 +5,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var mainWindow: NSWindow?
     private var popover: NSPopover?
+    private var eventMonitor: Any?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBar()
@@ -35,15 +36,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem.button, let popover = popover else { return }
         
         if popover.isShown {
-            popover.performClose(nil)
+            closePopover()
         } else {
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.becomeKey()
+            startEventMonitor()
+        }
+    }
+    
+    private func closePopover() {
+        popover?.performClose(nil)
+        stopEventMonitor()
+    }
+    
+    private func startEventMonitor() {
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            if self?.popover?.isShown == true {
+                self?.closePopover()
+            }
+        }
+    }
+    
+    private func stopEventMonitor() {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
         }
     }
     
     private func showMainWindow() {
-        popover?.performClose(nil)
+        closePopover()
         
         if mainWindow == nil {
             let contentView = MainWindowView()

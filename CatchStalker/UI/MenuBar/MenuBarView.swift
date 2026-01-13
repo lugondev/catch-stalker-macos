@@ -320,6 +320,8 @@ struct ModuleToggle: View {
     private func requestPermission() {
         guard let permissionName = permissionName else { return }
         
+        permissions.resetRequestFlags()
+        
         switch permissionName {
         case "Accessibility":
             permissions.requestAccessibilityPermission()

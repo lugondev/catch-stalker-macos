@@ -15,6 +15,9 @@ final class PermissionsManager: ObservableObject {
     private var isRequestingAccessibility = false
     private var isRequestingScreenRecording = false
     private var isRequestingCamera = false
+    private var hasRequestedAccessibility = false
+    private var hasRequestedScreenRecording = false
+    private var hasRequestedCamera = false
     
     private init() {
         checkAllPermissions()
@@ -22,7 +25,7 @@ final class PermissionsManager: ObservableObject {
     }
     
     private func startPeriodicCheck() {
-        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
             self?.checkAllPermissions()
         }
     }
@@ -38,8 +41,9 @@ final class PermissionsManager: ObservableObject {
     }
     
     func requestAccessibilityPermission() {
-        guard !accessibilityGranted && !isRequestingAccessibility else { return }
+        guard !accessibilityGranted && !isRequestingAccessibility && !hasRequestedAccessibility else { return }
         isRequestingAccessibility = true
+        hasRequestedAccessibility = true
         
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         AXIsProcessTrustedWithOptions(options)
@@ -50,96 +54,21 @@ final class PermissionsManager: ObservableObject {
     }
     
     func checkScreenRecordingPermission() {
-        if #available(macOS 12.3, *) {
-            Task { @MainActor in
-                do {
-                    let content = try await SCShareableContent.current
-                    self.screenRecordingGranted = !content.displays.isEmpty
-                } catch {
-                    // SCShareableContent throws when permission is denied
-                    self.screenRecordingGranted = false
-                }
-            }
-        } else {
-            screenRecordingGranted = CGPreflightScreenCaptureAccess()
-        }
+        // CGPreflightScreenCaptureAccess is more reliable for checking permission status
+        screenRecordingGranted = CGPreflightScreenCaptureAccess()
     }
     
     func requestScreenRecordingPermission() {
-        guard !screenRecordingGranted && !isRequestingScreenRecording else { return }
+        guard !screenRecordingGranted && !isRequestingScreenRecording && !hasRequestedScreenRecording else { return }
         isRequestingScreenRecording = true
+        hasRequestedScreenRecording = true
         
-        if #available(macOS 12.3, *) {
-            Task { @MainActor in
-                do {
-                    _ = try await SCShareableContent.current
-                    checkScreenRecordingPermission()
-                    
-                    if !self.screenRecordingGranted {
-                        showScreenRecordingPermissionAlert()
-                    }
-                } catch {
-                    showScreenRecordingPermissionAlert()
-                }
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
-                    self?.isRequestingScreenRecording = false
-                }
-            }
-        } else {
-            CGRequestScreenCaptureAccess()
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-                self?.checkScreenRecordingPermission()
-                
-                if self?.screenRecordingGranted == false {
-                    self?.showScreenRecordingPermissionAlert()
-                }
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-                    self?.isRequestingScreenRecording = false
-                }
-            }
-        }
-    }
-    
-    private func showScreenRecordingPermissionAlert() {
-        guard !isRequestingScreenRecording else { return }
+        CGRequestScreenCaptureAccess()
         
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = "Screen Recording Permission Required"
-            alert.informativeText = "CatchStalker needs Screen Recording permission to capture screenshots.\n\nSteps:\n1. Click 'Open System Settings' below\n2. Enable CatchStalker in the list\n3. Restart CatchStalker app"
-            alert.alertStyle = .informational
-            alert.addButton(withTitle: "Open System Settings")
-            alert.addButton(withTitle: "Later")
-            
-            let response = alert.runModal()
-            if response == .alertFirstButtonReturn {
-                self.openSystemPreferencesScreenRecording()
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    let restartAlert = NSAlert()
-                    restartAlert.messageText = "Restart Required"
-                    restartAlert.informativeText = "After enabling Screen Recording permission, you need to restart CatchStalker for changes to take effect."
-                    restartAlert.alertStyle = .informational
-                    restartAlert.addButton(withTitle: "Restart Now")
-                    restartAlert.addButton(withTitle: "Restart Later")
-                    
-                    if restartAlert.runModal() == .alertFirstButtonReturn {
-                        self.restartApp()
-                    }
-                }
-            }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            self?.checkScreenRecordingPermission()
+            self?.isRequestingScreenRecording = false
         }
-    }
-    
-    private func restartApp() {
-        let task = Process()
-        task.launchPath = "/bin/sh"
-        task.arguments = ["-c", "sleep 0.5; open '\(Bundle.main.bundlePath)'"]
-        task.launch()
-        NSApplication.shared.terminate(nil)
     }
     
     func checkCameraPermission() {
@@ -154,8 +83,9 @@ final class PermissionsManager: ObservableObject {
     }
     
     func requestCameraPermission() {
-        guard !cameraGranted && !isRequestingCamera else { return }
+        guard !cameraGranted && !isRequestingCamera && !hasRequestedCamera else { return }
         isRequestingCamera = true
+        hasRequestedCamera = true
         
         AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
             DispatchQueue.main.async {
@@ -188,6 +118,12 @@ final class PermissionsManager: ObservableObject {
     
     var allPermissionsGranted: Bool {
         accessibilityGranted && screenRecordingGranted && cameraGranted
+    }
+    
+    func resetRequestFlags() {
+        hasRequestedAccessibility = false
+        hasRequestedScreenRecording = false
+        hasRequestedCamera = false
     }
     
     deinit {

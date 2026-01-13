@@ -91,19 +91,28 @@ struct DashboardView: View {
                 PermissionStatusView(
                     title: "Accessibility",
                     isGranted: PermissionsManager.shared.accessibilityGranted,
-                    action: { PermissionsManager.shared.requestAccessibilityPermission() }
+                    action: {
+                        PermissionsManager.shared.resetRequestFlags()
+                        PermissionsManager.shared.requestAccessibilityPermission()
+                    }
                 )
                 
                 PermissionStatusView(
                     title: "Screen Recording",
                     isGranted: PermissionsManager.shared.screenRecordingGranted,
-                    action: { PermissionsManager.shared.requestScreenRecordingPermission() }
+                    action: {
+                        PermissionsManager.shared.resetRequestFlags()
+                        PermissionsManager.shared.requestScreenRecordingPermission()
+                    }
                 )
                 
                 PermissionStatusView(
                     title: "Camera",
                     isGranted: PermissionsManager.shared.cameraGranted,
-                    action: { PermissionsManager.shared.requestCameraPermission() }
+                    action: {
+                        PermissionsManager.shared.resetRequestFlags()
+                        PermissionsManager.shared.requestCameraPermission()
+                    }
                 )
             }
             .padding(.vertical, 8)

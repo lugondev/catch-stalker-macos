@@ -30,10 +30,7 @@ final class CameraCapture: NSObject, ObservableObject {
     
     func start(camera: AVCaptureDevice? = nil) {
         guard !isRunning else { return }
-        guard PermissionsManager.shared.cameraGranted else {
-            PermissionsManager.shared.requestCameraPermission()
-            return
-        }
+        guard PermissionsManager.shared.cameraGranted else { return }
         
         let selectedCamera = camera ?? AVCaptureDevice.default(for: .video)
         guard let device = selectedCamera else {

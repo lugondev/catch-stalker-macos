@@ -16,10 +16,7 @@ final class MouseTracker: ObservableObject {
     
     func start() {
         guard !isRunning else { return }
-        guard PermissionsManager.shared.accessibilityGranted else {
-            PermissionsManager.shared.requestAccessibilityPermission()
-            return
-        }
+        guard PermissionsManager.shared.accessibilityGranted else { return }
         
         let eventMask = (1 << CGEventType.mouseMoved.rawValue) |
                         (1 << CGEventType.leftMouseDown.rawValue) |

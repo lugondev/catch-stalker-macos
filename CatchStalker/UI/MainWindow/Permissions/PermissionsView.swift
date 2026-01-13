@@ -52,7 +52,10 @@ struct PermissionsView: View {
                 icon: "accessibility",
                 isGranted: permissions.accessibilityGranted,
                 requiredBy: ["Keystroke Logger", "Mouse Tracker"],
-                onRequest: { permissions.requestAccessibilityPermission() },
+                onRequest: {
+                    permissions.resetRequestFlags()
+                    permissions.requestAccessibilityPermission()
+                },
                 onOpenSettings: { permissions.openSystemPreferencesAccessibility() }
             )
             
@@ -62,7 +65,10 @@ struct PermissionsView: View {
                 icon: "rectangle.dashed.badge.record",
                 isGranted: permissions.screenRecordingGranted,
                 requiredBy: ["Screenshot Capture"],
-                onRequest: { permissions.requestScreenRecordingPermission() },
+                onRequest: {
+                    permissions.resetRequestFlags()
+                    permissions.requestScreenRecordingPermission()
+                },
                 onOpenSettings: { permissions.openSystemPreferencesScreenRecording() }
             )
             
@@ -72,7 +78,10 @@ struct PermissionsView: View {
                 icon: "camera.fill",
                 isGranted: permissions.cameraGranted,
                 requiredBy: ["Camera Capture"],
-                onRequest: { permissions.requestCameraPermission() },
+                onRequest: {
+                    permissions.resetRequestFlags()
+                    permissions.requestCameraPermission()
+                },
                 onOpenSettings: { permissions.openSystemPreferencesCamera() }
             )
         }

@@ -16,10 +16,7 @@ final class ScreenshotCapture: NSObject, ObservableObject {
     
     func start() {
         guard !isRunning else { return }
-        guard PermissionsManager.shared.screenRecordingGranted else {
-            PermissionsManager.shared.requestScreenRecordingPermission()
-            return
-        }
+        guard PermissionsManager.shared.screenRecordingGranted else { return }
         
         let interval = SettingsManager.shared.settings.screenshotInterval
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
