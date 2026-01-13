@@ -3,8 +3,52 @@ import SwiftUI
 struct LogsView: View {
     @State private var selectedLogType: LogType = .keystrokes
     @State private var searchText = ""
-    @State private var startDate = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
-    @State private var endDate = Date()
+    @State private var selectedDateRange: DateRangeOption = .last24Hours
+    @State private var customStartDate = Calendar.current.startOfDay(for: Date())
+    @State private var customEndDate = Date()
+    @State private var showCustomDatePicker = false
+    
+    enum DateRangeOption: String, CaseIterable {
+        case last24Hours = "Last 24 Hours"
+        case last7Days = "Last 7 Days"
+        case last30Days = "Last 30 Days"
+        case allTime = "All Time"
+        case custom = "Custom"
+        
+        var dateRange: (start: Date?, end: Date?) {
+            let now = Date()
+            
+            switch self {
+            case .last24Hours:
+                let start = Calendar.current.date(byAdding: .hour, value: -24, to: now)!
+                return (start, now)
+            case .last7Days:
+                let start = Calendar.current.date(byAdding: .day, value: -7, to: now)!
+                return (start, now)
+            case .last30Days:
+                let start = Calendar.current.date(byAdding: .day, value: -30, to: now)!
+                return (start, now)
+            case .allTime:
+                return (nil, nil)
+            case .custom:
+                return (nil, nil)
+            }
+        }
+    }
+    
+    private var effectiveStartDate: Date? {
+        if selectedDateRange == .custom {
+            return Calendar.current.startOfDay(for: customStartDate)
+        }
+        return selectedDateRange.dateRange.start
+    }
+    
+    private var effectiveEndDate: Date? {
+        if selectedDateRange == .custom {
+            return Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: customEndDate)
+        }
+        return selectedDateRange.dateRange.end
+    }
     
     enum LogType: String, CaseIterable {
         case keystrokes = "Keystrokes"
@@ -60,14 +104,26 @@ struct LogsView: View {
             Divider()
                 .frame(height: 20)
             
-            DatePicker("From", selection: $startDate, displayedComponents: .date)
-                .labelsHidden()
+            Picker("Date Range", selection: $selectedDateRange) {
+                ForEach(DateRangeOption.allCases, id: \.self) { option in
+                    Text(option.rawValue).tag(option)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(width: 130)
             
-            Text("to")
-                .foregroundColor(.secondary)
-            
-            DatePicker("To", selection: $endDate, displayedComponents: .date)
-                .labelsHidden()
+            if selectedDateRange == .custom {
+                DatePicker("", selection: $customStartDate, displayedComponents: .date)
+                    .labelsHidden()
+                    .frame(width: 100)
+                
+                Text("to")
+                    .foregroundColor(.secondary)
+                
+                DatePicker("", selection: $customEndDate, displayedComponents: .date)
+                    .labelsHidden()
+                    .frame(width: 100)
+            }
             
             Button(action: { }) {
                 Image(systemName: "arrow.clockwise")
@@ -81,57 +137,92 @@ struct LogsView: View {
     private var logContent: some View {
         switch selectedLogType {
         case .keystrokes:
-            KeystrokesLogView(searchText: searchText, startDate: startDate, endDate: endDate)
+            KeystrokesLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
         case .mouse:
-            MouseLogView(searchText: searchText, startDate: startDate, endDate: endDate)
+            MouseLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
         case .screenshots:
-            ScreenshotsLogView(searchText: searchText, startDate: startDate, endDate: endDate)
+            ScreenshotsLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
         case .camera:
-            CameraLogView(searchText: searchText, startDate: startDate, endDate: endDate)
+            CameraLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
         case .appHistory:
-            AppHistoryLogView(searchText: searchText, startDate: startDate, endDate: endDate)
+            AppHistoryLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
         case .fileAccess:
-            FileAccessLogView(searchText: searchText, startDate: startDate, endDate: endDate)
+            FileAccessLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
         case .clipboard:
-            ClipboardLogView(searchText: searchText, startDate: startDate, endDate: endDate)
+            ClipboardLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
         }
     }
 }
 
 struct KeystrokesLogView: View {
     let searchText: String
-    let startDate: Date
-    let endDate: Date
+    let startDate: Date?
+    let endDate: Date?
     
     @State private var events: [KeystrokeEvent] = []
+    @State private var currentPage = 0
+    @State private var hasMoreData = true
+    private let pageSize = 100
     
     var body: some View {
-        Table(filteredEvents) {
-            TableColumn("Time") { event in
-                Text(formatDate(event.timestamp))
-                    .font(.caption)
+        VStack(spacing: 0) {
+            Table(filteredEvents) {
+                TableColumn("Time") { (event: KeystrokeEvent) in
+                    Text(formatDate(event.timestamp))
+                        .font(.caption)
+                }
+                .width(min: 150, ideal: 180)
+                
+                TableColumn("Key") { (event: KeystrokeEvent) in
+                    Text(event.characters ?? "Key \(event.keyCode)")
+                }
+                .width(min: 80, ideal: 100)
+                
+                TableColumn("Modifiers") { (event: KeystrokeEvent) in
+                    Text(event.modifiers.description)
+                        .foregroundColor(.secondary)
+                }
+                .width(min: 80, ideal: 100)
+                
+                TableColumn("App") { (event: KeystrokeEvent) in
+                    Text(event.activeApp ?? "-")
+                        .foregroundColor(.secondary)
+                }
             }
-            .width(min: 150, ideal: 180)
             
-            TableColumn("Key") { event in
-                Text(event.characters ?? "Key \(event.keyCode)")
-            }
-            .width(min: 80, ideal: 100)
-            
-            TableColumn("Modifiers") { event in
-                Text(event.modifiers.description)
-                    .foregroundColor(.secondary)
-            }
-            .width(min: 80, ideal: 100)
-            
-            TableColumn("App") { event in
-                Text(event.activeApp ?? "-")
-                    .foregroundColor(.secondary)
-            }
+            paginationControls
         }
         .onAppear(perform: loadEvents)
-        .onChange(of: startDate) { _ in loadEvents() }
-        .onChange(of: endDate) { _ in loadEvents() }
+        .onChange(of: startDate) { _ in resetAndLoad() }
+        .onChange(of: endDate) { _ in resetAndLoad() }
+    }
+    
+    private var paginationControls: some View {
+        HStack {
+            Text("\(filteredEvents.count) items")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            Button(action: previousPage) {
+                Image(systemName: "chevron.left")
+            }
+            .disabled(currentPage == 0)
+            .buttonStyle(.bordered)
+            
+            Text("Page \(currentPage + 1)")
+                .font(.caption)
+            
+            Button(action: nextPage) {
+                Image(systemName: "chevron.right")
+            }
+            .disabled(!hasMoreData)
+            .buttonStyle(.bordered)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor))
     }
     
     private var filteredEvents: [KeystrokeEvent] {
@@ -142,8 +233,29 @@ struct KeystrokesLogView: View {
         }
     }
     
+    private func resetAndLoad() {
+        currentPage = 0
+        loadEvents()
+    }
+    
     private func loadEvents() {
-        events = DatabaseManager.shared.fetchKeystrokes(from: startDate, to: endDate)
+        let offset = currentPage * pageSize
+        events = DatabaseManager.shared.fetchKeystrokes(from: startDate, to: endDate, limit: pageSize, offset: offset)
+        hasMoreData = events.count == pageSize
+    }
+    
+    private func previousPage() {
+        if currentPage > 0 {
+            currentPage -= 1
+            loadEvents()
+        }
+    }
+    
+    private func nextPage() {
+        if hasMoreData {
+            currentPage += 1
+            loadEvents()
+        }
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -156,42 +268,88 @@ struct KeystrokesLogView: View {
 
 struct MouseLogView: View {
     let searchText: String
-    let startDate: Date
-    let endDate: Date
+    let startDate: Date?
+    let endDate: Date?
     
     @State private var events: [MouseEvent] = []
+    @State private var currentPage = 0
+    @State private var hasMoreData = true
+    private let pageSize = 100
     
     var body: some View {
-        Table(events) {
-            TableColumn("Time") { event in
-                Text(formatDate(event.timestamp))
-                    .font(.caption)
+        VStack(spacing: 0) {
+            Table(events) {
+                TableColumn("Time") { (event: MouseEvent) in
+                    Text(formatDate(event.timestamp))
+                        .font(.caption)
+                }
+                .width(min: 150, ideal: 180)
+                
+                TableColumn("Type") { (event: MouseEvent) in
+                    Text(event.eventType.rawValue)
+                }
+                .width(min: 80, ideal: 100)
+                
+                TableColumn("Position") { (event: MouseEvent) in
+                    Text("(\(Int(event.x)), \(Int(event.y)))")
+                        .font(.caption.monospaced())
+                }
+                .width(min: 100, ideal: 120)
+                
+                TableColumn("App") { (event: MouseEvent) in
+                    Text(event.activeApp ?? "-")
+                        .foregroundColor(.secondary)
+                }
             }
-            .width(min: 150, ideal: 180)
             
-            TableColumn("Type") { event in
-                Text(event.eventType.rawValue)
-            }
-            .width(min: 80, ideal: 100)
-            
-            TableColumn("Position") { event in
-                Text("(\(Int(event.x)), \(Int(event.y)))")
-                    .font(.caption.monospaced())
-            }
-            .width(min: 100, ideal: 120)
-            
-            TableColumn("App") { event in
-                Text(event.activeApp ?? "-")
-                    .foregroundColor(.secondary)
-            }
+            paginationControls
         }
         .onAppear(perform: loadEvents)
-        .onChange(of: startDate) { _ in loadEvents() }
-        .onChange(of: endDate) { _ in loadEvents() }
+        .onChange(of: startDate) { _ in resetAndLoad() }
+        .onChange(of: endDate) { _ in resetAndLoad() }
+    }
+    
+    private var paginationControls: some View {
+        HStack {
+            Text("\(events.count) items")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+            Button(action: previousPage) {
+                Image(systemName: "chevron.left")
+            }
+            .disabled(currentPage == 0)
+            .buttonStyle(.bordered)
+            Text("Page \(currentPage + 1)")
+                .font(.caption)
+            Button(action: nextPage) {
+                Image(systemName: "chevron.right")
+            }
+            .disabled(!hasMoreData)
+            .buttonStyle(.bordered)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor))
+    }
+    
+    private func resetAndLoad() {
+        currentPage = 0
+        loadEvents()
     }
     
     private func loadEvents() {
-        events = DatabaseManager.shared.fetchMouseEvents(from: startDate, to: endDate)
+        let offset = currentPage * pageSize
+        events = DatabaseManager.shared.fetchMouseEvents(from: startDate, to: endDate, limit: pageSize, offset: offset)
+        hasMoreData = events.count == pageSize
+    }
+    
+    private func previousPage() {
+        if currentPage > 0 { currentPage -= 1; loadEvents() }
+    }
+    
+    private func nextPage() {
+        if hasMoreData { currentPage += 1; loadEvents() }
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -204,58 +362,95 @@ struct MouseLogView: View {
 
 struct ScreenshotsLogView: View {
     let searchText: String
-    let startDate: Date
-    let endDate: Date
+    let startDate: Date?
+    let endDate: Date?
     
     @State private var events: [ScreenshotEvent] = []
     @State private var selectedEvent: ScreenshotEvent?
+    @State private var currentPage = 0
+    @State private var hasMoreData = true
+    private let pageSize = 50
     
     var body: some View {
-        HSplitView {
-            List(events, selection: $selectedEvent) { event in
-                VStack(alignment: .leading) {
-                    Text(formatDate(event.timestamp))
-                        .font(.caption)
-                    Text("\(event.width) x \(event.height)")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                .tag(event)
-            }
-            .frame(minWidth: 200)
-            
-            if let event = selectedEvent {
-                VStack {
-                    if let image = NSImage(contentsOfFile: event.filePath) {
-                        Image(nsImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } else {
-                        Text("Image not found")
+        VStack(spacing: 0) {
+            HSplitView {
+                List(events, id: \.id, selection: $selectedEvent) { event in
+                    VStack(alignment: .leading) {
+                        Text(formatDate(event.timestamp))
+                            .font(.caption)
+                        Text("\(event.width) x \(event.height)")
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
-                    
-                    Text(event.filePath)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                    .tag(event)
                 }
-                .padding()
-            } else {
-                Text("Select a screenshot to preview")
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(minWidth: 200)
+                
+                if let event = selectedEvent {
+                    VStack {
+                        if let image = NSImage(contentsOfFile: event.filePath) {
+                            Image(nsImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        } else {
+                            Text("Image not found")
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Text(event.filePath)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                    .padding()
+                } else {
+                    Text("Select a screenshot to preview")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
+            
+            paginationControls
         }
         .onAppear(perform: loadEvents)
-        .onChange(of: startDate) { _ in loadEvents() }
-        .onChange(of: endDate) { _ in loadEvents() }
+        .onChange(of: startDate) { _ in resetAndLoad() }
+        .onChange(of: endDate) { _ in resetAndLoad() }
+    }
+    
+    private var paginationControls: some View {
+        HStack {
+            Text("\(events.count) items")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+            Button(action: previousPage) { Image(systemName: "chevron.left") }
+                .disabled(currentPage == 0)
+                .buttonStyle(.bordered)
+            Text("Page \(currentPage + 1)").font(.caption)
+            Button(action: nextPage) { Image(systemName: "chevron.right") }
+                .disabled(!hasMoreData)
+                .buttonStyle(.bordered)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor))
+    }
+    
+    private func resetAndLoad() {
+        currentPage = 0
+        selectedEvent = nil
+        loadEvents()
     }
     
     private func loadEvents() {
-        events = DatabaseManager.shared.fetchScreenshots(from: startDate, to: endDate)
+        let offset = currentPage * pageSize
+        events = DatabaseManager.shared.fetchScreenshots(from: startDate, to: endDate, limit: pageSize, offset: offset)
+        hasMoreData = events.count == pageSize
     }
+    
+    private func previousPage() { if currentPage > 0 { currentPage -= 1; loadEvents() } }
+    private func nextPage() { if hasMoreData { currentPage += 1; loadEvents() } }
     
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -267,52 +462,89 @@ struct ScreenshotsLogView: View {
 
 struct CameraLogView: View {
     let searchText: String
-    let startDate: Date
-    let endDate: Date
+    let startDate: Date?
+    let endDate: Date?
     
     @State private var events: [CameraCaptureEvent] = []
     @State private var selectedEvent: CameraCaptureEvent?
+    @State private var currentPage = 0
+    @State private var hasMoreData = true
+    private let pageSize = 50
     
     var body: some View {
-        HSplitView {
-            List(events, selection: $selectedEvent) { event in
-                VStack(alignment: .leading) {
-                    Text(formatDate(event.timestamp))
-                        .font(.caption)
-                    Text(event.deviceName ?? "Unknown camera")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                .tag(event)
-            }
-            .frame(minWidth: 200)
-            
-            if let event = selectedEvent {
-                VStack {
-                    if let image = NSImage(contentsOfFile: event.filePath) {
-                        Image(nsImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } else {
-                        Text("Image not found")
+        VStack(spacing: 0) {
+            HSplitView {
+                List(events, id: \.id, selection: $selectedEvent) { event in
+                    VStack(alignment: .leading) {
+                        Text(formatDate(event.timestamp))
+                            .font(.caption)
+                        Text(event.deviceName ?? "Unknown camera")
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
+                    .tag(event)
                 }
-                .padding()
-            } else {
-                Text("Select a capture to preview")
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(minWidth: 200)
+                
+                if let event = selectedEvent {
+                    VStack {
+                        if let image = NSImage(contentsOfFile: event.filePath) {
+                            Image(nsImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        } else {
+                            Text("Image not found")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding()
+                } else {
+                    Text("Select a capture to preview")
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
+            
+            paginationControls
         }
         .onAppear(perform: loadEvents)
-        .onChange(of: startDate) { _ in loadEvents() }
-        .onChange(of: endDate) { _ in loadEvents() }
+        .onChange(of: startDate) { _ in resetAndLoad() }
+        .onChange(of: endDate) { _ in resetAndLoad() }
+    }
+    
+    private var paginationControls: some View {
+        HStack {
+            Text("\(events.count) items")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+            Button(action: previousPage) { Image(systemName: "chevron.left") }
+                .disabled(currentPage == 0)
+                .buttonStyle(.bordered)
+            Text("Page \(currentPage + 1)").font(.caption)
+            Button(action: nextPage) { Image(systemName: "chevron.right") }
+                .disabled(!hasMoreData)
+                .buttonStyle(.bordered)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor))
+    }
+    
+    private func resetAndLoad() {
+        currentPage = 0
+        selectedEvent = nil
+        loadEvents()
     }
     
     private func loadEvents() {
-        events = DatabaseManager.shared.fetchCameraCaptures(from: startDate, to: endDate)
+        let offset = currentPage * pageSize
+        events = DatabaseManager.shared.fetchCameraCaptures(from: startDate, to: endDate, limit: pageSize, offset: offset)
+        hasMoreData = events.count == pageSize
     }
+    
+    private func previousPage() { if currentPage > 0 { currentPage -= 1; loadEvents() } }
+    private func nextPage() { if hasMoreData { currentPage += 1; loadEvents() } }
     
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -324,48 +556,74 @@ struct CameraLogView: View {
 
 struct AppHistoryLogView: View {
     let searchText: String
-    let startDate: Date
-    let endDate: Date
+    let startDate: Date?
+    let endDate: Date?
     
     @State private var events: [AppHistoryEvent] = []
+    @State private var currentPage = 0
+    @State private var hasMoreData = true
+    private let pageSize = 100
     
     var body: some View {
-        Table(filteredEvents) {
-            TableColumn("Time") { event in
-                Text(formatDate(event.timestamp))
-                    .font(.caption)
-            }
-            .width(min: 150, ideal: 180)
-            
-            TableColumn("App") { event in
-                Text(event.appName)
-            }
-            .width(min: 150, ideal: 200)
-            
-            TableColumn("Event") { event in
-                Text(event.eventType.rawValue)
-                    .foregroundColor(event.eventType == .activated ? .green : .orange)
-            }
-            .width(min: 80, ideal: 100)
-            
-            TableColumn("Duration") { event in
-                if let duration = event.duration {
-                    Text(formatDuration(duration))
-                } else {
-                    Text("-")
+        VStack(spacing: 0) {
+            Table(filteredEvents) {
+                TableColumn("Time") { (event: AppHistoryEvent) in
+                    Text(formatDate(event.timestamp))
+                        .font(.caption)
+                }
+                .width(min: 150, ideal: 180)
+                
+                TableColumn("App") { (event: AppHistoryEvent) in
+                    Text(event.appName)
+                }
+                .width(min: 150, ideal: 200)
+                
+                TableColumn("Event") { (event: AppHistoryEvent) in
+                    Text(event.eventType.rawValue)
+                        .foregroundColor(event.eventType == .activated ? .green : .orange)
+                }
+                .width(min: 80, ideal: 100)
+                
+                TableColumn("Duration") { (event: AppHistoryEvent) in
+                    if let duration = event.duration {
+                        Text(formatDuration(duration))
+                    } else {
+                        Text("-")
+                    }
+                }
+                .width(min: 80, ideal: 100)
+                
+                TableColumn("Window") { (event: AppHistoryEvent) in
+                    Text(event.windowTitle ?? "-")
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
                 }
             }
-            .width(min: 80, ideal: 100)
             
-            TableColumn("Window") { event in
-                Text(event.windowTitle ?? "-")
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
+            paginationControls
         }
         .onAppear(perform: loadEvents)
-        .onChange(of: startDate) { _ in loadEvents() }
-        .onChange(of: endDate) { _ in loadEvents() }
+        .onChange(of: startDate) { _ in resetAndLoad() }
+        .onChange(of: endDate) { _ in resetAndLoad() }
+    }
+    
+    private var paginationControls: some View {
+        HStack {
+            Text("\(filteredEvents.count) items")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+            Button(action: previousPage) { Image(systemName: "chevron.left") }
+                .disabled(currentPage == 0)
+                .buttonStyle(.bordered)
+            Text("Page \(currentPage + 1)").font(.caption)
+            Button(action: nextPage) { Image(systemName: "chevron.right") }
+                .disabled(!hasMoreData)
+                .buttonStyle(.bordered)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor))
     }
     
     private var filteredEvents: [AppHistoryEvent] {
@@ -376,9 +634,19 @@ struct AppHistoryLogView: View {
         }
     }
     
-    private func loadEvents() {
-        events = DatabaseManager.shared.fetchAppHistory(from: startDate, to: endDate)
+    private func resetAndLoad() {
+        currentPage = 0
+        loadEvents()
     }
+    
+    private func loadEvents() {
+        let offset = currentPage * pageSize
+        events = DatabaseManager.shared.fetchAppHistory(from: startDate, to: endDate, limit: pageSize, offset: offset)
+        hasMoreData = events.count == pageSize
+    }
+    
+    private func previousPage() { if currentPage > 0 { currentPage -= 1; loadEvents() } }
+    private func nextPage() { if hasMoreData { currentPage += 1; loadEvents() } }
     
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -391,52 +659,73 @@ struct AppHistoryLogView: View {
         let hours = Int(seconds) / 3600
         let minutes = (Int(seconds) % 3600) / 60
         let secs = Int(seconds) % 60
-        
-        if hours > 0 {
-            return String(format: "%dh %dm", hours, minutes)
-        } else if minutes > 0 {
-            return String(format: "%dm %ds", minutes, secs)
-        } else {
-            return String(format: "%ds", secs)
-        }
+        if hours > 0 { return String(format: "%dh %dm", hours, minutes) }
+        else if minutes > 0 { return String(format: "%dm %ds", minutes, secs) }
+        else { return String(format: "%ds", secs) }
     }
 }
 
 struct FileAccessLogView: View {
     let searchText: String
-    let startDate: Date
-    let endDate: Date
+    let startDate: Date?
+    let endDate: Date?
     
     @State private var events: [FileAccessEvent] = []
+    @State private var currentPage = 0
+    @State private var hasMoreData = true
+    private let pageSize = 100
     
     var body: some View {
-        Table(filteredEvents) {
-            TableColumn("Time") { event in
-                Text(formatDate(event.timestamp))
-                    .font(.caption)
+        VStack(spacing: 0) {
+            Table(filteredEvents) {
+                TableColumn("Time") { (event: FileAccessEvent) in
+                    Text(formatDate(event.timestamp))
+                        .font(.caption)
+                }
+                .width(min: 150, ideal: 180)
+                
+                TableColumn("Event") { (event: FileAccessEvent) in
+                    Text(event.eventType.rawValue)
+                }
+                .width(min: 80, ideal: 100)
+                
+                TableColumn("File") { (event: FileAccessEvent) in
+                    Text(event.fileName)
+                }
+                .width(min: 150, ideal: 200)
+                
+                TableColumn("Path") { (event: FileAccessEvent) in
+                    Text(event.filePath)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
-            .width(min: 150, ideal: 180)
             
-            TableColumn("Event") { event in
-                Text(event.eventType.rawValue)
-            }
-            .width(min: 80, ideal: 100)
-            
-            TableColumn("File") { event in
-                Text(event.fileName)
-            }
-            .width(min: 150, ideal: 200)
-            
-            TableColumn("Path") { event in
-                Text(event.filePath)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
+            paginationControls
         }
         .onAppear(perform: loadEvents)
-        .onChange(of: startDate) { _ in loadEvents() }
-        .onChange(of: endDate) { _ in loadEvents() }
+        .onChange(of: startDate) { _ in resetAndLoad() }
+        .onChange(of: endDate) { _ in resetAndLoad() }
+    }
+    
+    private var paginationControls: some View {
+        HStack {
+            Text("\(filteredEvents.count) items")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+            Button(action: previousPage) { Image(systemName: "chevron.left") }
+                .disabled(currentPage == 0)
+                .buttonStyle(.bordered)
+            Text("Page \(currentPage + 1)").font(.caption)
+            Button(action: nextPage) { Image(systemName: "chevron.right") }
+                .disabled(!hasMoreData)
+                .buttonStyle(.bordered)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor))
     }
     
     private var filteredEvents: [FileAccessEvent] {
@@ -447,9 +736,19 @@ struct FileAccessLogView: View {
         }
     }
     
-    private func loadEvents() {
-        events = DatabaseManager.shared.fetchFileAccess(from: startDate, to: endDate)
+    private func resetAndLoad() {
+        currentPage = 0
+        loadEvents()
     }
+    
+    private func loadEvents() {
+        let offset = currentPage * pageSize
+        events = DatabaseManager.shared.fetchFileAccess(from: startDate, to: endDate, limit: pageSize, offset: offset)
+        hasMoreData = events.count == pageSize
+    }
+    
+    private func previousPage() { if currentPage > 0 { currentPage -= 1; loadEvents() } }
+    private func nextPage() { if hasMoreData { currentPage += 1; loadEvents() } }
     
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -461,44 +760,70 @@ struct FileAccessLogView: View {
 
 struct ClipboardLogView: View {
     let searchText: String
-    let startDate: Date
-    let endDate: Date
+    let startDate: Date?
+    let endDate: Date?
     
     @State private var events: [ClipboardEvent] = []
+    @State private var currentPage = 0
+    @State private var hasMoreData = true
+    private let pageSize = 100
     
     var body: some View {
-        Table(filteredEvents) {
-            TableColumn("Time") { event in
-                Text(formatDate(event.timestamp))
-                    .font(.caption)
+        VStack(spacing: 0) {
+            Table(filteredEvents) {
+                TableColumn("Time") { (event: ClipboardEvent) in
+                    Text(formatDate(event.timestamp))
+                        .font(.caption)
+                }
+                .width(min: 150, ideal: 180)
+                
+                TableColumn("Type") { (event: ClipboardEvent) in
+                    Text(event.contentType.rawValue)
+                }
+                .width(min: 80, ideal: 100)
+                
+                TableColumn("Content") { (event: ClipboardEvent) in
+                    Text(event.textContent ?? "(binary data)")
+                        .lineLimit(2)
+                }
+                
+                TableColumn("Size") { (event: ClipboardEvent) in
+                    Text(ByteCountFormatter.string(fromByteCount: Int64(event.dataSize), countStyle: .file))
+                        .foregroundColor(.secondary)
+                }
+                .width(min: 80, ideal: 100)
+                
+                TableColumn("Source") { (event: ClipboardEvent) in
+                    Text(event.sourceApp ?? "-")
+                        .foregroundColor(.secondary)
+                }
+                .width(min: 100, ideal: 150)
             }
-            .width(min: 150, ideal: 180)
             
-            TableColumn("Type") { event in
-                Text(event.contentType.rawValue)
-            }
-            .width(min: 80, ideal: 100)
-            
-            TableColumn("Content") { event in
-                Text(event.textContent ?? "(binary data)")
-                    .lineLimit(2)
-            }
-            
-            TableColumn("Size") { event in
-                Text(ByteCountFormatter.string(fromByteCount: Int64(event.dataSize), countStyle: .file))
-                    .foregroundColor(.secondary)
-            }
-            .width(min: 80, ideal: 100)
-            
-            TableColumn("Source") { event in
-                Text(event.sourceApp ?? "-")
-                    .foregroundColor(.secondary)
-            }
-            .width(min: 100, ideal: 150)
+            paginationControls
         }
         .onAppear(perform: loadEvents)
-        .onChange(of: startDate) { _ in loadEvents() }
-        .onChange(of: endDate) { _ in loadEvents() }
+        .onChange(of: startDate) { _ in resetAndLoad() }
+        .onChange(of: endDate) { _ in resetAndLoad() }
+    }
+    
+    private var paginationControls: some View {
+        HStack {
+            Text("\(filteredEvents.count) items")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+            Button(action: previousPage) { Image(systemName: "chevron.left") }
+                .disabled(currentPage == 0)
+                .buttonStyle(.bordered)
+            Text("Page \(currentPage + 1)").font(.caption)
+            Button(action: nextPage) { Image(systemName: "chevron.right") }
+                .disabled(!hasMoreData)
+                .buttonStyle(.bordered)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(NSColor.controlBackgroundColor))
     }
     
     private var filteredEvents: [ClipboardEvent] {
@@ -509,9 +834,19 @@ struct ClipboardLogView: View {
         }
     }
     
-    private func loadEvents() {
-        events = DatabaseManager.shared.fetchClipboard(from: startDate, to: endDate)
+    private func resetAndLoad() {
+        currentPage = 0
+        loadEvents()
     }
+    
+    private func loadEvents() {
+        let offset = currentPage * pageSize
+        events = DatabaseManager.shared.fetchClipboard(from: startDate, to: endDate, limit: pageSize, offset: offset)
+        hasMoreData = events.count == pageSize
+    }
+    
+    private func previousPage() { if currentPage > 0 { currentPage -= 1; loadEvents() } }
+    private func nextPage() { if hasMoreData { currentPage += 1; loadEvents() } }
     
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()

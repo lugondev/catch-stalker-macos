@@ -143,12 +143,13 @@ struct DashboardView: View {
         let fileManager = FileManager.default
         var size: Int64 = 0
         
-        guard let files = try? fileManager.contentsOfDirectory(atPath: path) else { return 0 }
+        guard let enumerator = fileManager.enumerator(atPath: path) else { return 0 }
         
-        for file in files {
+        while let file = enumerator.nextObject() as? String {
             let filePath = (path as NSString).appendingPathComponent(file)
             if let attributes = try? fileManager.attributesOfItem(atPath: filePath),
-               let fileSize = attributes[.size] as? Int64 {
+               let fileSize = attributes[.size] as? Int64,
+               attributes[.type] as? FileAttributeType == .typeRegular {
                 size += fileSize
             }
         }

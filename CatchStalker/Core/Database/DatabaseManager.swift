@@ -334,7 +334,7 @@ final class DatabaseManager {
         }
     }
     
-    func fetchKeystrokes(from: Date? = nil, to: Date? = nil, limit: Int = 1000) -> [KeystrokeEvent] {
+    func fetchKeystrokes(from: Date? = nil, to: Date? = nil, limit: Int = 1000, offset: Int = 0) -> [KeystrokeEvent] {
         var events: [KeystrokeEvent] = []
         var sql = "SELECT id, timestamp, key_code, characters, modifiers, active_app FROM keystrokes"
         var conditions: [String] = []
@@ -345,7 +345,7 @@ final class DatabaseManager {
         if !conditions.isEmpty {
             sql += " WHERE " + conditions.joined(separator: " AND ")
         }
-        sql += " ORDER BY timestamp DESC LIMIT ?"
+        sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
         
         dbQueue.sync {
             guard let db = db else { return }
@@ -362,6 +362,8 @@ final class DatabaseManager {
                     bindIndex += 1
                 }
                 sqlite3_bind_int(statement, bindIndex, Int32(limit))
+                bindIndex += 1
+                sqlite3_bind_int(statement, bindIndex, Int32(offset))
                 
                 while sqlite3_step(statement) == SQLITE_ROW {
                     let idString = String(cString: sqlite3_column_text(statement, 0))
@@ -382,7 +384,7 @@ final class DatabaseManager {
         return events
     }
     
-    func fetchMouseEvents(from: Date? = nil, to: Date? = nil, limit: Int = 1000) -> [MouseEvent] {
+    func fetchMouseEvents(from: Date? = nil, to: Date? = nil, limit: Int = 1000, offset: Int = 0) -> [MouseEvent] {
         var events: [MouseEvent] = []
         var sql = "SELECT id, timestamp, event_type, x, y, button, click_count, active_app FROM mouse_events"
         var conditions: [String] = []
@@ -393,7 +395,7 @@ final class DatabaseManager {
         if !conditions.isEmpty {
             sql += " WHERE " + conditions.joined(separator: " AND ")
         }
-        sql += " ORDER BY timestamp DESC LIMIT ?"
+        sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
         
         dbQueue.sync {
             guard let db = db else { return }
@@ -410,6 +412,8 @@ final class DatabaseManager {
                     bindIndex += 1
                 }
                 sqlite3_bind_int(statement, bindIndex, Int32(limit))
+                bindIndex += 1
+                sqlite3_bind_int(statement, bindIndex, Int32(offset))
                 
                 while sqlite3_step(statement) == SQLITE_ROW {
                     let idString = String(cString: sqlite3_column_text(statement, 0))
@@ -432,7 +436,7 @@ final class DatabaseManager {
         return events
     }
     
-    func fetchScreenshots(from: Date? = nil, to: Date? = nil, limit: Int = 100) -> [ScreenshotEvent] {
+    func fetchScreenshots(from: Date? = nil, to: Date? = nil, limit: Int = 100, offset: Int = 0) -> [ScreenshotEvent] {
         var events: [ScreenshotEvent] = []
         var sql = "SELECT id, timestamp, file_path, display_id, width, height, active_app FROM screenshots"
         var conditions: [String] = []
@@ -443,7 +447,7 @@ final class DatabaseManager {
         if !conditions.isEmpty {
             sql += " WHERE " + conditions.joined(separator: " AND ")
         }
-        sql += " ORDER BY timestamp DESC LIMIT ?"
+        sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
         
         dbQueue.sync {
             guard let db = db else { return }
@@ -460,6 +464,8 @@ final class DatabaseManager {
                     bindIndex += 1
                 }
                 sqlite3_bind_int(statement, bindIndex, Int32(limit))
+                bindIndex += 1
+                sqlite3_bind_int(statement, bindIndex, Int32(offset))
                 
                 while sqlite3_step(statement) == SQLITE_ROW {
                     let idString = String(cString: sqlite3_column_text(statement, 0))
@@ -481,7 +487,7 @@ final class DatabaseManager {
         return events
     }
     
-    func fetchCameraCaptures(from: Date? = nil, to: Date? = nil, limit: Int = 100) -> [CameraCaptureEvent] {
+    func fetchCameraCaptures(from: Date? = nil, to: Date? = nil, limit: Int = 100, offset: Int = 0) -> [CameraCaptureEvent] {
         var events: [CameraCaptureEvent] = []
         var sql = "SELECT id, timestamp, file_path, width, height, device_name FROM camera_captures"
         var conditions: [String] = []
@@ -492,7 +498,7 @@ final class DatabaseManager {
         if !conditions.isEmpty {
             sql += " WHERE " + conditions.joined(separator: " AND ")
         }
-        sql += " ORDER BY timestamp DESC LIMIT ?"
+        sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
         
         dbQueue.sync {
             guard let db = db else { return }
@@ -509,6 +515,8 @@ final class DatabaseManager {
                     bindIndex += 1
                 }
                 sqlite3_bind_int(statement, bindIndex, Int32(limit))
+                bindIndex += 1
+                sqlite3_bind_int(statement, bindIndex, Int32(offset))
                 
                 while sqlite3_step(statement) == SQLITE_ROW {
                     let idString = String(cString: sqlite3_column_text(statement, 0))
@@ -529,7 +537,7 @@ final class DatabaseManager {
         return events
     }
     
-    func fetchAppHistory(from: Date? = nil, to: Date? = nil, limit: Int = 1000) -> [AppHistoryEvent] {
+    func fetchAppHistory(from: Date? = nil, to: Date? = nil, limit: Int = 1000, offset: Int = 0) -> [AppHistoryEvent] {
         var events: [AppHistoryEvent] = []
         var sql = "SELECT id, timestamp, bundle_identifier, app_name, window_title, event_type, duration FROM app_history"
         var conditions: [String] = []
@@ -540,7 +548,7 @@ final class DatabaseManager {
         if !conditions.isEmpty {
             sql += " WHERE " + conditions.joined(separator: " AND ")
         }
-        sql += " ORDER BY timestamp DESC LIMIT ?"
+        sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
         
         dbQueue.sync {
             guard let db = db else { return }
@@ -557,6 +565,8 @@ final class DatabaseManager {
                     bindIndex += 1
                 }
                 sqlite3_bind_int(statement, bindIndex, Int32(limit))
+                bindIndex += 1
+                sqlite3_bind_int(statement, bindIndex, Int32(offset))
                 
                 while sqlite3_step(statement) == SQLITE_ROW {
                     let idString = String(cString: sqlite3_column_text(statement, 0))
@@ -578,7 +588,7 @@ final class DatabaseManager {
         return events
     }
     
-    func fetchFileAccess(from: Date? = nil, to: Date? = nil, limit: Int = 1000) -> [FileAccessEvent] {
+    func fetchFileAccess(from: Date? = nil, to: Date? = nil, limit: Int = 1000, offset: Int = 0) -> [FileAccessEvent] {
         var events: [FileAccessEvent] = []
         var sql = "SELECT id, timestamp, file_path, file_name, event_type, app_bundle_identifier FROM file_access"
         var conditions: [String] = []
@@ -589,7 +599,7 @@ final class DatabaseManager {
         if !conditions.isEmpty {
             sql += " WHERE " + conditions.joined(separator: " AND ")
         }
-        sql += " ORDER BY timestamp DESC LIMIT ?"
+        sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
         
         dbQueue.sync {
             guard let db = db else { return }
@@ -606,6 +616,8 @@ final class DatabaseManager {
                     bindIndex += 1
                 }
                 sqlite3_bind_int(statement, bindIndex, Int32(limit))
+                bindIndex += 1
+                sqlite3_bind_int(statement, bindIndex, Int32(offset))
                 
                 while sqlite3_step(statement) == SQLITE_ROW {
                     let idString = String(cString: sqlite3_column_text(statement, 0))
@@ -626,7 +638,7 @@ final class DatabaseManager {
         return events
     }
     
-    func fetchClipboard(from: Date? = nil, to: Date? = nil, limit: Int = 500) -> [ClipboardEvent] {
+    func fetchClipboard(from: Date? = nil, to: Date? = nil, limit: Int = 500, offset: Int = 0) -> [ClipboardEvent] {
         var events: [ClipboardEvent] = []
         var sql = "SELECT id, timestamp, content_type, text_content, data_size, source_app FROM clipboard"
         var conditions: [String] = []
@@ -637,7 +649,7 @@ final class DatabaseManager {
         if !conditions.isEmpty {
             sql += " WHERE " + conditions.joined(separator: " AND ")
         }
-        sql += " ORDER BY timestamp DESC LIMIT ?"
+        sql += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
         
         dbQueue.sync {
             guard let db = db else { return }
@@ -654,6 +666,8 @@ final class DatabaseManager {
                     bindIndex += 1
                 }
                 sqlite3_bind_int(statement, bindIndex, Int32(limit))
+                bindIndex += 1
+                sqlite3_bind_int(statement, bindIndex, Int32(offset))
                 
                 while sqlite3_step(statement) == SQLITE_ROW {
                     let idString = String(cString: sqlite3_column_text(statement, 0))

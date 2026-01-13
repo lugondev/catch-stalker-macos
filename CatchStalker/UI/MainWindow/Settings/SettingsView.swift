@@ -7,6 +7,9 @@ struct SettingsView: View {
     @State private var showAddScheduleSheet = false
     @State private var showAddAppRuleSheet = false
     @State private var showExportSheet = false
+    @State private var showResetConfirmation = false
+    @State private var showCleanupConfirmation = false
+    @State private var isResetting = false
     
     var body: some View {
         ScrollView {
@@ -32,6 +35,27 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showExportSheet) {
             ExportDataSheet()
+        }
+        .alert("Reset to Factory Settings", isPresented: $showResetConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset Everything", role: .destructive) {
+                performFactoryReset()
+            }
+        } message: {
+            Text("This will delete ALL data including:\n• All logs and captured data\n• Screenshots and camera images\n• Settings and preferences\n• Password protection\n\nThis action cannot be undone.")
+        }
+        .alert("Clean Up Storage", isPresented: $showCleanupConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clean Up", role: .destructive) {
+                CleanupService.shared.performCleanup()
+            }
+        } message: {
+            let days = settings.settings.autoDeleteDays
+            if days > 0 {
+                Text("This will delete all data older than \(days) days including database records, screenshots, and camera images.")
+            } else {
+                Text("Auto-delete is set to \"Never\". No data will be deleted.\n\nChange the auto-delete setting to enable cleanup.")
+            }
         }
     }
     
@@ -92,6 +116,12 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
+                    Button("Copy") {
+                        copyToClipboard(settings.settings.screenshotStoragePath)
+                    }
+                    Button("Open") {
+                        openFolder(settings.settings.screenshotStoragePath)
+                    }
                     Button("Change") {
                         selectFolder { path in
                             settings.updateScreenshotPath(path)
@@ -106,10 +136,31 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
+                    Button("Copy") {
+                        copyToClipboard(settings.settings.cameraStoragePath)
+                    }
+                    Button("Open") {
+                        openFolder(settings.settings.cameraStoragePath)
+                    }
                     Button("Change") {
                         selectFolder { path in
                             settings.updateCameraPath(path)
                         }
+                    }
+                }
+                
+                HStack {
+                    Text("Database")
+                    Spacer()
+                    Text(databasePath)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Button("Copy") {
+                        copyToClipboard(databasePath)
+                    }
+                    Button("Open") {
+                        openInFinder(databasePath)
                     }
                 }
                 
@@ -132,7 +183,7 @@ struct SettingsView: View {
                 HStack {
                     Spacer()
                     Button("Clean Up Now") {
-                        CleanupService.shared.performCleanup()
+                        showCleanupConfirmation = true
                     }
                     .buttonStyle(.bordered)
                 }
@@ -266,6 +317,24 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.bordered)
                 }
+                
+                Divider()
+                
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Reset to Factory Settings")
+                        Text("Delete all data, logs, and settings")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Button("Reset...") {
+                        showResetConfirmation = true
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.red)
+                    .disabled(isResetting)
+                }
             }
             .padding(.vertical, 8)
         }
@@ -282,12 +351,61 @@ struct SettingsView: View {
         }
     }
     
+    private func openFolder(_ path: String) {
+        let url = URL(fileURLWithPath: path)
+        NSWorkspace.shared.open(url)
+    }
+    
+    private func openInFinder(_ path: String) {
+        let url = URL(fileURLWithPath: path)
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+    
+    private func copyToClipboard(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+    
+    private var databasePath: String {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return appSupport.appendingPathComponent("CatchStalker/catchstalker.db").path
+    }
+    
     private func formatScheduleTime(_ schedule: AntiSleepSchedule) -> String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         let start = formatter.string(from: schedule.startTime)
         let end = formatter.string(from: schedule.endTime)
         return "\(start) - \(end)"
+    }
+    
+    private func performFactoryReset() {
+        isResetting = true
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            KeystrokeLogger.shared.stop()
+            MouseTracker.shared.stop()
+            ScreenshotCapture.shared.stop()
+            CameraCapture.shared.stop()
+            AppHistoryTracker.shared.stop()
+            FileAccessMonitor.shared.stop()
+            ClipboardMonitor.shared.stop()
+            AntiSleepManager.shared.disableGlobal()
+            
+            let fileManager = FileManager.default
+            let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            let catchStalkerDir = appSupport.appendingPathComponent("CatchStalker")
+            
+            try? fileManager.removeItem(at: catchStalkerDir)
+            
+            UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier ?? "")
+            UserDefaults.standard.synchronize()
+            
+            DispatchQueue.main.async {
+                isResetting = false
+                NSApplication.shared.terminate(nil)
+            }
+        }
     }
 }
 
