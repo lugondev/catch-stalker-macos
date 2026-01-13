@@ -48,7 +48,7 @@ struct PermissionsView: View {
         VStack(spacing: 16) {
             PermissionCard(
                 title: "Accessibility",
-                description: "Required for capturing keyboard and mouse events",
+                description: "Required for capturing keyboard and mouse events. Also enable Input Monitoring in System Settings.",
                 icon: "accessibility",
                 isGranted: permissions.accessibilityGranted,
                 requiredBy: ["Keystroke Logger", "Mouse Tracker"],
@@ -57,6 +57,18 @@ struct PermissionsView: View {
                     permissions.requestAccessibilityPermission()
                 },
                 onOpenSettings: { permissions.openSystemPreferencesAccessibility() }
+            )
+            
+            PermissionCard(
+                title: "Input Monitoring",
+                description: "Required on macOS Catalina+ to capture keyboard input. Add CatchStalker to Input Monitoring in System Settings.",
+                icon: "keyboard",
+                isGranted: permissions.accessibilityGranted,
+                requiredBy: ["Keystroke Logger"],
+                onRequest: {
+                    permissions.openSystemPreferencesInputMonitoring()
+                },
+                onOpenSettings: { permissions.openSystemPreferencesInputMonitoring() }
             )
             
             PermissionCard(
@@ -93,7 +105,7 @@ struct PermissionsView: View {
                 ModulePermissionRow(
                     moduleName: "Keystroke Logger",
                     moduleIcon: "keyboard",
-                    requiredPermission: "Accessibility",
+                    requiredPermission: "Accessibility + Input Monitoring",
                     isEnabled: permissions.accessibilityGranted
                 )
                 

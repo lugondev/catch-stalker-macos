@@ -104,6 +104,12 @@ final class PermissionsManager: ObservableObject {
         }
     }
     
+    func openSystemPreferencesInputMonitoring() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+    
     func openSystemPreferencesScreenRecording() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
             NSWorkspace.shared.open(url)

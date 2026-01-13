@@ -14,7 +14,10 @@ final class AppHistoryTracker: ObservableObject {
     private init() {}
     
     func start() {
-        guard !isRunning else { return }
+        guard !isRunning else {
+            print("[AppHistoryTracker] Already running")
+            return
+        }
         
         observer = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification,
@@ -29,6 +32,7 @@ final class AppHistoryTracker: ObservableObject {
         }
         
         isRunning = true
+        print("[AppHistoryTracker] Started successfully")
     }
     
     func stop() {

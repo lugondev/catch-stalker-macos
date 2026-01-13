@@ -14,8 +14,15 @@ final class KeystrokeLogger: ObservableObject {
     private init() {}
     
     func start() {
-        guard !isRunning else { return }
-        guard PermissionsManager.shared.accessibilityGranted else { return }
+        guard !isRunning else {
+            print("[KeystrokeLogger] Already running")
+            return
+        }
+        
+        guard PermissionsManager.shared.accessibilityGranted else {
+            print("[KeystrokeLogger] ERROR: Accessibility permission not granted. Cannot start.")
+            return
+        }
         
         let eventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
         
@@ -29,7 +36,7 @@ final class KeystrokeLogger: ObservableObject {
             },
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
-            print("Failed to create event tap")
+            print("[KeystrokeLogger] ERROR: Failed to create event tap. Check Accessibility permission in System Settings > Privacy & Security > Accessibility")
             return
         }
         
@@ -40,6 +47,7 @@ final class KeystrokeLogger: ObservableObject {
             CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
             CGEvent.tapEnable(tap: tap, enable: true)
             isRunning = true
+            print("[KeystrokeLogger] Started successfully")
         }
     }
     
