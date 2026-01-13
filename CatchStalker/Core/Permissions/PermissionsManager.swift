@@ -50,24 +50,18 @@ final class PermissionsManager: ObservableObject {
     }
     
     func checkScreenRecordingPermission() {
-        Task { @MainActor in
-            screenRecordingGranted = testScreenCapture()
-        }
-    }
-    
-    private func testScreenCapture() -> Bool {
         if #available(macOS 12.3, *) {
             Task { @MainActor in
                 do {
                     let content = try await SCShareableContent.current
                     self.screenRecordingGranted = !content.displays.isEmpty
                 } catch {
+                    // SCShareableContent throws when permission is denied
                     self.screenRecordingGranted = false
                 }
             }
-            return screenRecordingGranted
         } else {
-            return CGPreflightScreenCaptureAccess()
+            screenRecordingGranted = CGPreflightScreenCaptureAccess()
         }
     }
     
