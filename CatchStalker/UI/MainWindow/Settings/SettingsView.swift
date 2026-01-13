@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var showExportSheet = false
     @State private var showResetConfirmation = false
     @State private var showCleanupConfirmation = false
+    @State private var showDeleteAllConfirmation = false
     @State private var isResetting = false
     
     var body: some View {
@@ -56,6 +57,14 @@ struct SettingsView: View {
             } else {
                 Text("Auto-delete is set to \"Never\". No data will be deleted.\n\nChange the auto-delete setting to enable cleanup.")
             }
+        }
+        .alert("Delete All Storage", isPresented: $showDeleteAllConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete All", role: .destructive) {
+                CleanupService.shared.deleteAllStorage()
+            }
+        } message: {
+            Text("This will permanently delete ALL captured data including:\n• All database records\n• All screenshots\n• All camera images\n\nThis action cannot be undone.")
         }
     }
     
@@ -181,11 +190,33 @@ struct SettingsView: View {
                 }
                 
                 HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Clean Up Old Data")
+                        Text("Delete data older than \(settings.settings.autoDeleteDays) days")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                     Spacer()
-                    Button("Clean Up Now") {
+                    Button("Clean Up") {
                         showCleanupConfirmation = true
                     }
                     .buttonStyle(.bordered)
+                    .disabled(settings.settings.autoDeleteDays == 0)
+                }
+                
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Delete All Storage")
+                        Text("Remove all captured data and images")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Button("Delete All") {
+                        showDeleteAllConfirmation = true
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.red)
                 }
             }
             .padding(.vertical, 8)

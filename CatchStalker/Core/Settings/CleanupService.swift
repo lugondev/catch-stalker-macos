@@ -42,6 +42,35 @@ final class CleanupService {
         print("[CleanupService] Cleanup completed - Deleted \(screenshotCount) screenshots, \(cameraCount) camera captures")
     }
     
+    func deleteAllStorage() {
+        let settings = SettingsManager.shared.settings
+        
+        print("[CleanupService] Deleting ALL storage data...")
+        
+        DatabaseManager.shared.deleteAllData()
+        
+        let screenshotCount = deleteAllFiles(in: settings.screenshotStoragePath)
+        let cameraCount = deleteAllFiles(in: settings.cameraStoragePath)
+        
+        print("[CleanupService] Deleted ALL data - \(screenshotCount) screenshots, \(cameraCount) camera captures")
+    }
+    
+    @discardableResult
+    private func deleteAllFiles(in directory: String) -> Int {
+        let fileManager = FileManager.default
+        guard let files = try? fileManager.contentsOfDirectory(atPath: directory) else { return 0 }
+        
+        var deletedCount = 0
+        for file in files {
+            let filePath = (directory as NSString).appendingPathComponent(file)
+            if (try? fileManager.removeItem(atPath: filePath)) != nil {
+                deletedCount += 1
+            }
+        }
+        
+        return deletedCount
+    }
+    
     @discardableResult
     private func cleanupOldFiles(in directory: String, olderThan date: Date) -> Int {
         let fileManager = FileManager.default

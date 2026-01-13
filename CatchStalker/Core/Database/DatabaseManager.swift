@@ -708,6 +708,26 @@ final class DatabaseManager {
         }
     }
     
+    func deleteAllData() {
+        dbQueue.async { [weak self] in
+            guard let self = self, let db = self.db else { return }
+            
+            let tables = ["keystrokes", "mouse_events", "screenshots", "camera_captures", "app_history", "file_access", "clipboard"]
+            
+            for table in tables {
+                let sql = "DELETE FROM \(table)"
+                var statement: OpaquePointer?
+                
+                if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
+                    sqlite3_step(statement)
+                }
+                sqlite3_finalize(statement)
+            }
+            
+            print("[DatabaseManager] All data deleted from all tables")
+        }
+    }
+    
     func getStats() -> DashboardStats {
         var stats = DashboardStats()
         
