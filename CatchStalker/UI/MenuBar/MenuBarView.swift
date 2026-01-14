@@ -4,6 +4,7 @@ struct MenuBarView: View {
     @StateObject private var settings = SettingsManager.shared
     @StateObject private var permissions = PermissionsManager.shared
     @StateObject private var antiSleep = AntiSleepManager.shared
+    @StateObject private var appProtector = AppProtector.shared
     
     @StateObject private var keystrokeLogger = KeystrokeLogger.shared
     @StateObject private var mouseTracker = MouseTracker.shared
@@ -27,6 +28,10 @@ struct MenuBarView: View {
             Divider()
             
             antiSleepSection
+            
+            Divider()
+            
+            appProtectionSection
             
             Divider()
             
@@ -297,6 +302,73 @@ struct MenuBarView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+            }
+        }
+    }
+    
+    private var appProtectionSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("App Protection")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            HStack {
+                Image(systemName: "shield.fill")
+                    .foregroundStyle(appProtector.isRunning ? StatusColor.active : StatusColor.inactive)
+                
+                Text("Block Protected Apps")
+                
+                Spacer()
+                
+                Toggle("", isOn: Binding(
+                    get: { settings.settings.appProtectionEnabled },
+                    set: { newValue in
+                        settings.settings.appProtectionEnabled = newValue
+                        if newValue {
+                            AppProtector.shared.start()
+                        } else {
+                            AppProtector.shared.stop()
+                        }
+                        settings.saveImmediately()
+                    }
+                ))
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .disabled(settings.settings.redirectAppConfig.isEmpty)
+            }
+            
+            if settings.settings.appProtectionEnabled {
+                if appProtector.blockCount > 0 {
+                    HStack {
+                        Image(systemName: "hand.raised.fill")
+                            .foregroundStyle(StatusColor.warning)
+                        Text("Blocked: \(appProtector.blockCount)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        if let lastApp = appProtector.lastBlockedApp {
+                            Text("(\(lastApp))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+                
+                if !settings.settings.protectedAppRules.isEmpty {
+                    HStack {
+                        Image(systemName: "list.bullet.rectangle")
+                            .foregroundStyle(StatusColor.info)
+                        Text("\(settings.settings.protectedAppRules.count) app(s) protected")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            
+            if settings.settings.redirectAppConfig.isEmpty {
+                Text("Configure redirect app in Settings")
+                    .font(.caption2)
+                    .foregroundStyle(StatusColor.warning)
             }
         }
     }

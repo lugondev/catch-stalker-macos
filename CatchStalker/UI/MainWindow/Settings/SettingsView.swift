@@ -6,6 +6,8 @@ struct SettingsView: View {
     @State private var showPasswordSheet = false
     @State private var showAddScheduleSheet = false
     @State private var showAddAppRuleSheet = false
+    @State private var showAddProtectedAppSheet = false
+    @State private var showSelectRedirectAppSheet = false
     @State private var showExportSheet = false
     @State private var showResetConfirmation = false
     @State private var showCleanupConfirmation = false
@@ -18,6 +20,7 @@ struct SettingsView: View {
                 generalSection
                 intervalsSection
                 storageSection
+                appProtectionSection
                 antiSleepSection
                 securitySection
                 dataSection
@@ -33,6 +36,12 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showAddAppRuleSheet) {
             AddAppRuleSheet()
+        }
+        .sheet(isPresented: $showAddProtectedAppSheet) {
+            AddProtectedAppSheet()
+        }
+        .sheet(isPresented: $showSelectRedirectAppSheet) {
+            SelectRedirectAppSheet()
         }
         .sheet(isPresented: $showExportSheet) {
             ExportDataSheet()
@@ -217,6 +226,101 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.bordered)
                     .tint(StatusColor.error)
+                }
+            }
+            .padding(.vertical, Spacing.sm)
+        }
+    }
+    
+    private var appProtectionSection: some View {
+        GroupBox("App Protection") {
+            VStack(alignment: .leading, spacing: Spacing.contentSpacing) {
+                HStack {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text("Enable App Protection")
+                        Text("Block protected apps and redirect to another app")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: Binding(
+                        get: { settings.settings.appProtectionEnabled },
+                        set: { newValue in
+                            settings.settings.appProtectionEnabled = newValue
+                            if newValue {
+                                AppProtector.shared.start()
+                            } else {
+                                AppProtector.shared.stop()
+                            }
+                        }
+                    ))
+                    .labelsHidden()
+                }
+                
+                Divider()
+                
+                HStack {
+                    Text("Redirect To")
+                        .font(.headline)
+                    Spacer()
+                    if settings.settings.redirectAppConfig.isEmpty {
+                        Text("Not set")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(settings.settings.redirectAppConfig.appName)
+                            .foregroundStyle(StatusColor.success)
+                    }
+                    Button("Select") {
+                        showSelectRedirectAppSheet = true
+                    }
+                }
+                
+                Divider()
+                
+                HStack {
+                    Text("Protected Apps")
+                        .font(.headline)
+                    Spacer()
+                    Button(action: { showAddProtectedAppSheet = true }) {
+                        Image(systemName: "plus")
+                    }
+                    .disabled(settings.settings.redirectAppConfig.isEmpty)
+                }
+                
+                if settings.settings.redirectAppConfig.isEmpty {
+                    Text("Select a redirect app first")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, Spacing.sm)
+                } else if settings.settings.protectedAppRules.isEmpty {
+                    Text("No protected apps configured")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, Spacing.sm)
+                } else {
+                    ForEach(Array(settings.settings.protectedAppRules.enumerated()), id: \.element.id) { index, rule in
+                        HStack {
+                            Toggle("", isOn: Binding(
+                                get: { rule.isEnabled },
+                                set: { settings.settings.protectedAppRules[index].isEnabled = $0 }
+                            ))
+                            .labelsHidden()
+                            
+                            Text(rule.appName)
+                            
+                            Spacer()
+                            
+                            Text(rule.bundleIdentifier)
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                            
+                            Button(action: { settings.removeProtectedAppRule(at: index) }) {
+                                Image(systemName: "trash")
+                                    .foregroundStyle(StatusColor.error)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
             }
             .padding(.vertical, Spacing.sm)
@@ -771,5 +875,162 @@ struct ExportDataSheet: View {
                 }
             }
         }
+    }
+}
+
+struct AddProtectedAppSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var runningApps: [NSRunningApplication] = []
+    @State private var selectedApp: NSRunningApplication?
+    
+    var body: some View {
+        VStack(spacing: Spacing.sectionSpacing) {
+            Text("Add Protected App")
+                .font(.headline)
+            
+            Text("Select an app to block. When opened, it will redirect to your configured app:")
+                .foregroundStyle(.secondary)
+            
+            List(runningApps, id: \.processIdentifier, selection: $selectedApp) { app in
+                HStack {
+                    if let icon = app.icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .frame(width: IconSize.lg, height: IconSize.lg)
+                    }
+                    VStack(alignment: .leading) {
+                        Text(app.localizedName ?? "Unknown")
+                        if let bundleId = app.bundleIdentifier {
+                            Text(bundleId)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .tag(app)
+            }
+            .frame(height: 250)
+            
+            HStack {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                
+                Button("Add") {
+                    if let app = selectedApp,
+                       let bundleId = app.bundleIdentifier,
+                       let name = app.localizedName {
+                        AppProtector.shared.addProtectedApp(bundleId: bundleId, appName: name)
+                    }
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(selectedApp == nil)
+            }
+        }
+        .padding(Spacing.sheetPadding)
+        .frame(width: 450)
+        .onAppear {
+            loadApps()
+        }
+    }
+    
+    private func loadApps() {
+        let redirectBundleId = SettingsManager.shared.settings.redirectAppConfig.bundleIdentifier
+        let protectedBundleIds = Set(SettingsManager.shared.settings.protectedAppRules.map { $0.bundleIdentifier })
+        let selfBundleId = Bundle.main.bundleIdentifier ?? ""
+        
+        runningApps = NSWorkspace.shared.runningApplications
+            .filter { app in
+                guard app.activationPolicy == .regular else { return false }
+                guard let bundleId = app.bundleIdentifier else { return false }
+                guard bundleId != redirectBundleId else { return false }
+                guard bundleId != selfBundleId else { return false }
+                guard !protectedBundleIds.contains(bundleId) else { return false }
+                return true
+            }
+            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
+    }
+}
+
+struct SelectRedirectAppSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var runningApps: [NSRunningApplication] = []
+    @State private var selectedApp: NSRunningApplication?
+    
+    var body: some View {
+        VStack(spacing: Spacing.sectionSpacing) {
+            Text("Select Redirect App")
+                .font(.headline)
+            
+            Text("Protected apps will redirect to this app when opened:")
+                .foregroundStyle(.secondary)
+            
+            List(runningApps, id: \.processIdentifier, selection: $selectedApp) { app in
+                HStack {
+                    if let icon = app.icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .frame(width: IconSize.lg, height: IconSize.lg)
+                    }
+                    VStack(alignment: .leading) {
+                        Text(app.localizedName ?? "Unknown")
+                        if let bundleId = app.bundleIdentifier {
+                            Text(bundleId)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .tag(app)
+            }
+            .frame(height: 250)
+            
+            HStack {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                
+                if !SettingsManager.shared.settings.redirectAppConfig.isEmpty {
+                    Button("Clear") {
+                        AppProtector.shared.clearRedirectApp()
+                        dismiss()
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(StatusColor.error)
+                }
+                
+                Button("Select") {
+                    if let app = selectedApp,
+                       let bundleId = app.bundleIdentifier,
+                       let name = app.localizedName {
+                        AppProtector.shared.setRedirectApp(bundleId: bundleId, appName: name)
+                    }
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(selectedApp == nil)
+            }
+        }
+        .padding(Spacing.sheetPadding)
+        .frame(width: 450)
+        .onAppear {
+            loadApps()
+        }
+    }
+    
+    private func loadApps() {
+        let selfBundleId = Bundle.main.bundleIdentifier ?? ""
+        
+        runningApps = NSWorkspace.shared.runningApplications
+            .filter { app in
+                guard app.activationPolicy == .regular else { return false }
+                guard let bundleId = app.bundleIdentifier else { return false }
+                guard bundleId != selfBundleId else { return false }
+                return true
+            }
+            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
     }
 }

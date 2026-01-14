@@ -24,6 +24,7 @@
 		E80000001000000000000010 /* FileAccessMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000010 /* FileAccessMonitor.swift */; };
 		E80000001000000000000011 /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000011 /* ClipboardMonitor.swift */; };
 		E80000001000000000000012 /* AntiSleepManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000012 /* AntiSleepManager.swift */; };
+		E80000001000000000000033 /* AppProtector.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000033 /* AppProtector.swift */; };
 		E80000001000000000000013 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000013 /* MenuBarView.swift */; };
 		E80000001000000000000014 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000014 /* MainWindowView.swift */; };
 		E80000001000000000000015 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000015 /* DashboardView.swift */; };
@@ -59,6 +60,7 @@
 		E80000002000000000000010 /* FileAccessMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAccessMonitor.swift; sourceTree = "<group>"; };
 		E80000002000000000000011 /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
 		E80000002000000000000012 /* AntiSleepManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntiSleepManager.swift; sourceTree = "<group>"; };
+		E80000002000000000000033 /* AppProtector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppProtector.swift; sourceTree = "<group>"; };
 		E80000002000000000000013 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		E80000002000000000000014 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		E80000002000000000000015 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -168,6 +170,7 @@
 				E80000005000000000000017 /* FileAccess */,
 				E80000005000000000000018 /* Clipboard */,
 				E80000005000000000000019 /* AntiSleep */,
+				E80000005000000000000033 /* AppProtector */,
 			);
 			path = Modules;
 			sourceTree = "<group>";
@@ -290,6 +293,14 @@
 				E80000002000000000000012 /* AntiSleepManager.swift */,
 			);
 			path = AntiSleep;
+			sourceTree = "<group>";
+		};
+		E80000005000000000000033 /* AppProtector */ = {
+			isa = PBXGroup;
+			children = (
+				E80000002000000000000033 /* AppProtector.swift */,
+			);
+			path = AppProtector;
 			sourceTree = "<group>";
 		};
 		E80000005000000000000020 /* MenuBar */ = {
@@ -417,6 +428,7 @@
 				E80000001000000000000010 /* FileAccessMonitor.swift in Sources */,
 				E80000001000000000000011 /* ClipboardMonitor.swift in Sources */,
 				E80000001000000000000012 /* AntiSleepManager.swift in Sources */,
+				E80000001000000000000033 /* AppProtector.swift in Sources */,
 				E80000001000000000000013 /* MenuBarView.swift in Sources */,
 				E80000001000000000000014 /* MainWindowView.swift in Sources */,
 				E80000001000000000000015 /* DashboardView.swift in Sources */,

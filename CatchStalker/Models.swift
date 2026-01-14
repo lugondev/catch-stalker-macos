@@ -256,6 +256,36 @@ struct AntiSleepAppRule: Identifiable, Codable {
     }
 }
 
+// MARK: - Protected App Rule
+struct ProtectedAppRule: Identifiable, Codable {
+    let id: UUID
+    var bundleIdentifier: String
+    var appName: String
+    var isEnabled: Bool
+    
+    init(id: UUID = UUID(), bundleIdentifier: String, appName: String, isEnabled: Bool = true) {
+        self.id = id
+        self.bundleIdentifier = bundleIdentifier
+        self.appName = appName
+        self.isEnabled = isEnabled
+    }
+}
+
+// MARK: - Redirect App Config
+struct RedirectAppConfig: Codable, Equatable {
+    var bundleIdentifier: String
+    var appName: String
+    
+    init(bundleIdentifier: String = "", appName: String = "") {
+        self.bundleIdentifier = bundleIdentifier
+        self.appName = appName
+    }
+    
+    var isEmpty: Bool {
+        bundleIdentifier.isEmpty
+    }
+}
+
 // MARK: - App Settings
 struct AppSettings: Codable {
     // Global monitoring toggle
@@ -283,6 +313,11 @@ struct AppSettings: Codable {
     var antiSleepGlobalEnabled: Bool = false
     var antiSleepSchedules: [AntiSleepSchedule] = []
     var antiSleepAppRules: [AntiSleepAppRule] = []
+    
+    // App Protection
+    var appProtectionEnabled: Bool = false
+    var protectedAppRules: [ProtectedAppRule] = []
+    var redirectAppConfig: RedirectAppConfig = RedirectAppConfig()
     
     // Security
     var passwordProtectionEnabled: Bool = false

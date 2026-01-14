@@ -79,6 +79,15 @@ final class SettingsManager: ObservableObject {
         settings.antiSleepAppRules.remove(at: index)
     }
     
+    func addProtectedAppRule(_ rule: ProtectedAppRule) {
+        settings.protectedAppRules.append(rule)
+    }
+    
+    func removeProtectedAppRule(at index: Int) {
+        guard index < settings.protectedAppRules.count else { return }
+        settings.protectedAppRules.remove(at: index)
+    }
+    
     func resetToDefaults() {
         settings = AppSettings.default
         ensureStorageDirectories()

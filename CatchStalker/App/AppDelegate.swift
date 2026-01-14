@@ -132,6 +132,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             AntiSleepManager.shared.startAppMonitoring()
         }
         
+        if settings.appProtectionEnabled {
+            AppProtector.shared.start()
+        }
+        
         CleanupService.shared.startAutoCleanup()
     }
     
@@ -144,6 +148,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         FileAccessMonitor.shared.stop()
         ClipboardMonitor.shared.stop()
         AntiSleepManager.shared.disableGlobal()
+        AppProtector.shared.stop()
         CleanupService.shared.stopAutoCleanup()
     }
     
