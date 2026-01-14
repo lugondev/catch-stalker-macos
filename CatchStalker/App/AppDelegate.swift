@@ -91,26 +91,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         let settings = SettingsManager.shared.settings
         
-        if settings.keystrokeEnabled {
-            KeystrokeLogger.shared.start()
-        }
-        if settings.mouseEnabled {
-            MouseTracker.shared.start()
-        }
-        if settings.screenshotEnabled {
-            ScreenshotCapture.shared.start()
-        }
-        if settings.cameraEnabled {
-            CameraCapture.shared.start()
-        }
-        if settings.appHistoryEnabled {
-            AppHistoryTracker.shared.start()
-        }
-        if settings.fileAccessEnabled {
-            FileAccessMonitor.shared.start()
-        }
-        if settings.clipboardEnabled {
-            ClipboardMonitor.shared.start()
+        if settings.globalMonitoringEnabled {
+            if settings.keystrokeEnabled {
+                KeystrokeLogger.shared.start()
+            }
+            if settings.mouseEnabled {
+                MouseTracker.shared.start()
+            }
+            if settings.screenshotEnabled {
+                ScreenshotCapture.shared.start()
+            }
+            if settings.cameraEnabled {
+                CameraCapture.shared.start()
+            }
+            if settings.appHistoryEnabled {
+                AppHistoryTracker.shared.start()
+            }
+            if settings.fileAccessEnabled {
+                FileAccessMonitor.shared.start()
+            }
+            if settings.clipboardEnabled {
+                ClipboardMonitor.shared.start()
+            }
         }
         
         if settings.antiSleepGlobalEnabled {

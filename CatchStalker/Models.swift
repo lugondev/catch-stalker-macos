@@ -258,6 +258,9 @@ struct AntiSleepAppRule: Identifiable, Codable {
 
 // MARK: - App Settings
 struct AppSettings: Codable {
+    // Global monitoring toggle
+    var globalMonitoringEnabled: Bool = true
+    
     // Module toggles
     var keystrokeEnabled: Bool = false
     var mouseEnabled: Bool = false
