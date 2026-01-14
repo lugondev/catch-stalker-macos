@@ -59,16 +59,18 @@ Prevent your Mac from sleeping with flexible options:
 
 ### Additional Features
 
-- **Dashboard**: View statistics and summaries of all monitored activities
+- **Dashboard**: View statistics and summaries of all monitored activities with interactive charts
 - **Log Viewer**: Browse and search through recorded events with filtering
 - **Data Export**: Export logs to JSON or CSV format
 - **Auto-Cleanup**: Automatically delete old data after configurable number of days
+- **Manual Cleanup**: One-click cleanup with confirmation dialog to delete all stored data
 - **Password Protection**: Optional password to protect access to the application
 - **Launch at Login**: Start CatchStalker automatically when you log in
 
 ## Requirements
 
-- macOS 13.0 or later
+- macOS 14.0 or later (Sonoma+)
+- Xcode 15.0 or later for building
 - The following system permissions:
 
 | Permission | Required For |
@@ -181,3 +183,34 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for gu
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+### v1.1.0 (2026-01-14)
+- **Dashboard Improvements**:
+  - Added confirmation dialog for "Clean Up Now" button to prevent accidental data deletion
+  - Improved Storage Usage card UI with better formatting and alignment
+  - Storage card now spans full width consistently with other sections
+- **UI/UX Enhancements**:
+  - Fixed content overlapping header when scrolling in main window
+  - Added modern unified toolbar style with transparent titlebar
+  - Disabled "Clean Up Now" button when storage is empty
+- **Requirements**:
+  - Updated minimum macOS requirement to 14.0 (Sonoma)
+
+### v1.0.0
+- Initial release
+- Keystroke logging with modifier key support
+- Mouse tracking (movements, clicks, scrolls, drags)
+- Periodic screenshot capture with multi-display support
+- Camera capture at configurable intervals
+- Application history tracking
+- File access monitoring
+- Clipboard content logging
+- Anti-sleep functionality with schedules and app rules
+- Dashboard with activity statistics
+- Log viewer with search and filtering
+- Data export (JSON/CSV)
+- Auto-cleanup and manual cleanup options
+- Password protection
+- Launch at login support
