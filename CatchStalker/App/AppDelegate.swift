@@ -1,7 +1,7 @@
 import Cocoa
 import SwiftUI
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem!
     private var mainWindow: NSWindow?
     private var popover: NSPopover?
@@ -71,16 +71,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let contentView = MainWindowView()
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
-                styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
             )
             window.center()
             window.title = "CatchStalker"
+            window.titlebarAppearsTransparent = true
+            window.toolbarStyle = .unified
             window.contentView = NSHostingView(rootView: contentView)
             window.isReleasedWhenClosed = false
+            window.delegate = self
             mainWindow = window
         }
+        
+        NSApp.setActivationPolicy(.regular)
         
         mainWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -140,5 +145,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         ClipboardMonitor.shared.stop()
         AntiSleepManager.shared.disableGlobal()
         CleanupService.shared.stopAutoCleanup()
+    }
+    
+    func windowWillClose(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
     }
 }

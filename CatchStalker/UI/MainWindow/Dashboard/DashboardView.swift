@@ -4,6 +4,7 @@ import Charts
 struct DashboardView: View {
     @State private var stats = DashboardStats()
     @State private var isLoading = true
+    @State private var showCleanupConfirmation = false
     
     var body: some View {
         ZStack {
@@ -22,15 +23,7 @@ struct DashboardView: View {
                         }
                     }
                     
-                    ViewThatFits(in: .horizontal) {
-                        HStack(alignment: .top, spacing: 20) {
-                            storageInfo
-                            Spacer()
-                        }
-                        VStack(spacing: 16) {
-                            storageInfo
-                        }
-                    }
+                    storageInfo
                     
                     permissionsSection
                 }
@@ -132,33 +125,57 @@ struct DashboardView: View {
         GroupBox("Storage Usage") {
             HStack(alignment: .top, spacing: 32) {
                 VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Image(systemName: "internaldrive")
-                        Text("Total Used: \(formatBytes(stats.storageUsed))")
-                    }
+                    storageRow(
+                        icon: "internaldrive",
+                        label: "Total Used",
+                        value: stats.storageUsed
+                    )
                     
-                    HStack {
-                        Image(systemName: "camera.viewfinder")
-                        Text("Screenshots: \(formatBytes(getDirectorySize(SettingsManager.shared.settings.screenshotStoragePath)))")
-                    }
+                    storageRow(
+                        icon: "camera.viewfinder",
+                        label: "Screenshots",
+                        value: getDirectorySize(SettingsManager.shared.settings.screenshotStoragePath)
+                    )
                     
-                    HStack {
-                        Image(systemName: "camera.fill")
-                        Text("Camera: \(formatBytes(getDirectorySize(SettingsManager.shared.settings.cameraStoragePath)))")
-                    }
+                    storageRow(
+                        icon: "camera.fill",
+                        label: "Camera",
+                        value: getDirectorySize(SettingsManager.shared.settings.cameraStoragePath)
+                    )
                 }
                 
                 Spacer()
                 
                 Button("Clean Up Now") {
-                    CleanupService.shared.performCleanup()
-                    loadStats()
+                    showCleanupConfirmation = true
                 }
                 .buttonStyle(.bordered)
+                .disabled(stats.storageUsed == 0)
             }
             .padding(.vertical, 8)
         }
         .frame(maxWidth: .infinity)
+        .alert("Clean Up All Data", isPresented: $showCleanupConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete All", role: .destructive) {
+                CleanupService.shared.deleteAllStorage()
+                loadStats()
+            }
+        } message: {
+            Text("This will permanently delete all screenshots, camera captures, and database records. This action cannot be undone.")
+        }
+    }
+    
+    private func storageRow(icon: String, label: String, value: Int64) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundColor(.secondary)
+                .frame(width: 20)
+            Text("\(label):")
+                .foregroundColor(.secondary)
+            Text(formatBytes(value))
+                .fontWeight(.medium)
+        }
     }
     
     private var permissionsSection: some View {
