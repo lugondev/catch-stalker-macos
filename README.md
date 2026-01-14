@@ -93,6 +93,29 @@ To install the built application:
 2. Export the application
 3. Move `CatchStalker.app` to your Applications folder
 
+### Bypassing Gatekeeper (For Downloaded/Pre-built Apps)
+
+If you download a pre-built version of CatchStalker or transfer it from another machine, macOS Gatekeeper may block the app from running because it's not signed with an Apple Developer certificate.
+
+To remove the quarantine flag and allow the app to run:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/CatchStalker.app
+```
+
+> ⚠️ **Security Notice**: Only run this command if you trust the source of the application. This command removes macOS's quarantine protection, which is designed to protect you from potentially malicious software downloaded from the internet.
+
+## Disclaimer
+
+**USE AT YOUR OWN RISK.** This software is provided "as is" without warranty of any kind, express or implied. The developers are not responsible for any damages, data loss, or legal issues arising from the use of this application.
+
+- This application is intended for **personal self-monitoring purposes only**.
+- **Do not use this software to monitor others without their explicit consent** - doing so may violate privacy laws in your jurisdiction.
+- Users are solely responsible for ensuring their use of this software complies with all applicable local, state, and federal laws.
+- The keystroke logging and screen capture features are powerful tools - use them responsibly and ethically.
+
+By using this software, you acknowledge that you have read and understood this disclaimer.
+
 ## Usage
 
 CatchStalker runs as a menu bar application. Click the eye icon in the menu bar to access:
