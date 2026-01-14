@@ -17,7 +17,7 @@ struct MenuBarView: View {
     let quitApp: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             headerSection
             
             Divider()
@@ -37,7 +37,7 @@ struct MenuBarView: View {
     }
     
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
                 Image(nsImage: NSApp.applicationIconImage)
                     .resizable()
@@ -54,8 +54,8 @@ struct MenuBarView: View {
             
             HStack {
                 Image(systemName: settings.settings.globalMonitoringEnabled ? "power.circle.fill" : "power.circle")
-                    .foregroundColor(settings.settings.globalMonitoringEnabled ? .green : .gray)
-                    .font(.system(size: 14))
+                    .foregroundStyle(settings.settings.globalMonitoringEnabled ? StatusColor.active : StatusColor.inactive)
+                    .font(.system(size: IconSize.sm))
                 
                 Text("Global Monitoring")
                     .font(.callout)
@@ -69,7 +69,7 @@ struct MenuBarView: View {
                         handleGlobalToggle(enabled: newValue)
                     }
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, Spacing.xs)
         }
     }
     
@@ -95,14 +95,12 @@ struct MenuBarView: View {
     }
     
     private var statusIndicator: some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(isAnyModuleRunning ? Color.green : Color.gray)
-                .frame(width: 8, height: 8)
+        HStack(spacing: Spacing.xs) {
+            StatusIndicator(isActive: isAnyModuleRunning)
             
             Text(isAnyModuleRunning ? "Active" : "Idle")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
     }
     
@@ -117,10 +115,10 @@ struct MenuBarView: View {
     }
     
     private var monitoringToggles: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("Monitoring")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Group {
                 ModuleToggle(
@@ -227,14 +225,14 @@ struct MenuBarView: View {
     }
     
     private var antiSleepSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("Anti-Sleep")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             HStack {
                 Image(systemName: "moon.zzz.fill")
-                    .foregroundColor(antiSleep.isEnabled ? .orange : .gray)
+                    .foregroundStyle(antiSleep.isEnabled ? StatusColor.warning : StatusColor.inactive)
                 
                 Text("Prevent Sleep")
                 
@@ -243,7 +241,7 @@ struct MenuBarView: View {
                 if antiSleep.isEnabled && antiSleep.remainingTime > 0 {
                     Text(antiSleep.formattedRemainingTime)
                         .font(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(StatusColor.warning)
                         .monospacedDigit()
                 }
                 
@@ -265,7 +263,7 @@ struct MenuBarView: View {
                 HStack {
                     Text("Duration:")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     
                     Picker("", selection: Binding(
                         get: { antiSleep.selectedDuration },
@@ -284,20 +282,20 @@ struct MenuBarView: View {
             if antiSleep.isActiveBySchedule {
                 HStack {
                     Image(systemName: "calendar.badge.clock")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(StatusColor.info)
                     Text("Active by schedule")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             
             if antiSleep.isActiveByApp {
                 HStack {
                     Image(systemName: "app.fill")
-                        .foregroundColor(.purple)
+                        .foregroundStyle(.purple)
                     Text("Active by app rule")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -319,7 +317,7 @@ struct MenuBarView: View {
                 Image(systemName: "power")
             }
             .buttonStyle(.bordered)
-            .tint(.red)
+            .tint(StatusColor.error)
         }
     }
 }
@@ -337,11 +335,11 @@ struct ModuleToggle: View {
     @StateObject private var permissions = PermissionsManager.shared
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Spacing.xxs) {
             HStack {
                 Image(systemName: icon)
-                    .frame(width: 20)
-                    .foregroundColor(isRunning ? .green : (isPermissionGranted ? .gray : .red))
+                    .frame(width: IconSize.md)
+                    .foregroundStyle(isRunning ? StatusColor.active : (isPermissionGranted ? StatusColor.inactive : StatusColor.error))
                 
                 Text(title)
                     .font(.callout)
@@ -350,7 +348,7 @@ struct ModuleToggle: View {
                 
                 if !isPermissionGranted {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(StatusColor.warning)
                         .font(.caption)
                 }
                 
@@ -373,9 +371,9 @@ struct ModuleToggle: View {
             
             if !isPermissionGranted, let permission = permissionName {
                 Text("Requires \(permission) permission")
-                    .font(.system(size: 9))
-                    .foregroundColor(.orange)
-                    .padding(.leading, 24)
+                    .font(.caption2)
+                    .foregroundStyle(StatusColor.warning)
+                    .padding(.leading, IconSize.lg + Spacing.xs)
             }
         }
     }

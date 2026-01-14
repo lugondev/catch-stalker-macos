@@ -14,7 +14,7 @@ struct SettingsView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: Spacing.xxl) {
                 generalSection
                 intervalsSection
                 storageSection
@@ -70,7 +70,7 @@ struct SettingsView: View {
     
     private var generalSection: some View {
         GroupBox("General") {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Spacing.contentSpacing) {
                 HStack {
                     Text("Launch at Login")
                     Spacer()
@@ -78,13 +78,13 @@ struct SettingsView: View {
                         .labelsHidden()
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
     }
     
     private var intervalsSection: some View {
         GroupBox("Capture Intervals") {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Spacing.contentSpacing) {
                 HStack {
                     Text("Screenshot Interval")
                     Spacer()
@@ -111,18 +111,18 @@ struct SettingsView: View {
                     .frame(width: 150)
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
     }
     
     private var storageSection: some View {
         GroupBox("Storage") {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Spacing.contentSpacing) {
                 HStack {
                     Text("Screenshot Storage")
                     Spacer()
                     Text(settings.settings.screenshotStoragePath)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                     Button("Copy") {
@@ -142,7 +142,7 @@ struct SettingsView: View {
                     Text("Camera Storage")
                     Spacer()
                     Text(settings.settings.cameraStoragePath)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                     Button("Copy") {
@@ -162,7 +162,7 @@ struct SettingsView: View {
                     Text("Database")
                     Spacer()
                     Text(databasePath)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                     Button("Copy") {
@@ -190,11 +190,11 @@ struct SettingsView: View {
                 }
                 
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("Clean Up Old Data")
                         Text("Delete data older than \(settings.settings.autoDeleteDays) days")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     Spacer()
                     Button("Clean Up") {
@@ -205,27 +205,27 @@ struct SettingsView: View {
                 }
                 
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("Delete All Storage")
                         Text("Remove all captured data and images")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     Spacer()
                     Button("Delete All") {
                         showDeleteAllConfirmation = true
                     }
                     .buttonStyle(.bordered)
-                    .tint(.red)
+                    .tint(StatusColor.error)
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
     }
     
     private var antiSleepSection: some View {
         GroupBox("Anti-Sleep") {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Spacing.contentSpacing) {
                 HStack {
                     Text("Schedules")
                         .font(.headline)
@@ -237,9 +237,9 @@ struct SettingsView: View {
                 
                 if settings.settings.antiSleepSchedules.isEmpty {
                     Text("No schedules configured")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, Spacing.sm)
                 } else {
                     ForEach(Array(settings.settings.antiSleepSchedules.enumerated()), id: \.element.id) { index, schedule in
                         HStack {
@@ -254,11 +254,11 @@ struct SettingsView: View {
                             Spacer()
                             
                             Text(formatScheduleTime(schedule))
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                             
                             Button(action: { settings.removeAntiSleepSchedule(at: index) }) {
                                 Image(systemName: "trash")
-                                    .foregroundColor(.red)
+                                    .foregroundStyle(StatusColor.error)
                             }
                             .buttonStyle(.plain)
                         }
@@ -278,9 +278,9 @@ struct SettingsView: View {
                 
                 if settings.settings.antiSleepAppRules.isEmpty {
                     Text("No app rules configured")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, Spacing.sm)
                 } else {
                     ForEach(Array(settings.settings.antiSleepAppRules.enumerated()), id: \.element.id) { index, rule in
                         HStack {
@@ -295,51 +295,51 @@ struct SettingsView: View {
                             Spacer()
                             
                             Text(rule.bundleIdentifier)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                                 .font(.caption)
                             
                             Button(action: { settings.removeAntiSleepAppRule(at: index) }) {
                                 Image(systemName: "trash")
-                                    .foregroundColor(.red)
+                                    .foregroundStyle(StatusColor.error)
                             }
                             .buttonStyle(.plain)
                         }
                     }
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
     }
     
     private var securitySection: some View {
         GroupBox("Security") {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Spacing.contentSpacing) {
                 HStack {
                     Text("Password Protection")
                     Spacer()
                     
                     if PasswordManager.shared.hasPassword() {
                         Text("Enabled")
-                            .foregroundColor(.green)
+                            .foregroundStyle(StatusColor.success)
                         Button("Change") {
                             showPasswordSheet = true
                         }
                     } else {
                         Text("Disabled")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         Button("Enable") {
                             showPasswordSheet = true
                         }
                     }
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
     }
     
     private var dataSection: some View {
         GroupBox("Data") {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Spacing.contentSpacing) {
                 HStack {
                     Text("Export Data")
                     Spacer()
@@ -352,22 +352,22 @@ struct SettingsView: View {
                 Divider()
                 
                 HStack {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("Reset to Factory Settings")
                         Text("Delete all data, logs, and settings")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     Spacer()
                     Button("Reset...") {
                         showResetConfirmation = true
                     }
                     .buttonStyle(.bordered)
-                    .tint(.red)
+                    .tint(StatusColor.error)
                     .disabled(isResetting)
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
     }
     
@@ -453,7 +453,7 @@ struct PasswordSettingsSheet: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Spacing.sectionSpacing) {
             Text(hasExistingPassword ? "Change Password" : "Set Password")
                 .font(.headline)
             
@@ -470,7 +470,7 @@ struct PasswordSettingsSheet: View {
             
             if showError {
                 Text(errorMessage)
-                    .foregroundColor(.red)
+                    .foregroundStyle(StatusColor.error)
                     .font(.caption)
             }
             
@@ -491,7 +491,7 @@ struct PasswordSettingsSheet: View {
                         }
                     }
                     .buttonStyle(.bordered)
-                    .tint(.red)
+                    .tint(StatusColor.error)
                 }
                 
                 Button("Save") {
@@ -501,7 +501,7 @@ struct PasswordSettingsSheet: View {
                 .disabled(newPassword.isEmpty || newPassword != confirmPassword)
             }
         }
-        .padding(30)
+        .padding(Spacing.sheetPadding)
         .frame(width: 350)
     }
     
@@ -535,7 +535,7 @@ struct AddScheduleSheet: View {
     @State private var selectedWeekdays: Set<Weekday> = Set(Weekday.allCases)
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Spacing.sectionSpacing) {
             Text("Add Schedule")
                 .font(.headline)
             
@@ -557,7 +557,7 @@ struct AddScheduleSheet: View {
                         }
                     }
                     .buttonStyle(.bordered)
-                    .tint(selectedWeekdays.contains(day) ? .accentColor : .gray)
+                    .tint(selectedWeekdays.contains(day) ? .accentColor : StatusColor.inactive)
                 }
             }
             
@@ -580,7 +580,7 @@ struct AddScheduleSheet: View {
                 .disabled(selectedWeekdays.isEmpty)
             }
         }
-        .padding(30)
+        .padding(Spacing.sheetPadding)
         .frame(width: 400)
     }
 }
@@ -591,19 +591,19 @@ struct AddAppRuleSheet: View {
     @State private var selectedApp: NSRunningApplication?
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Spacing.sectionSpacing) {
             Text("Add App Rule")
                 .font(.headline)
             
             Text("Select an app to prevent sleep when it's active:")
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             List(runningApps, id: \.processIdentifier, selection: $selectedApp) { app in
                 HStack {
                     if let icon = app.icon {
                         Image(nsImage: icon)
                             .resizable()
-                            .frame(width: 24, height: 24)
+                            .frame(width: IconSize.lg, height: IconSize.lg)
                     }
                     Text(app.localizedName ?? "Unknown")
                 }
@@ -629,7 +629,7 @@ struct AddAppRuleSheet: View {
                 .disabled(selectedApp == nil)
             }
         }
-        .padding(30)
+        .padding(Spacing.sheetPadding)
         .frame(width: 400)
         .onAppear {
             runningApps = NSWorkspace.shared.runningApplications
@@ -657,20 +657,20 @@ struct ExportDataSheet: View {
     @State private var showSuccess = false
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Spacing.sectionSpacing) {
             Text("Export Data")
                 .font(.headline)
             
             GroupBox("Date Range") {
-                VStack(spacing: 12) {
+                VStack(spacing: Spacing.md) {
                     DatePicker("From:", selection: $startDate, displayedComponents: [.date, .hourAndMinute])
                     DatePicker("To:", selection: $endDate, displayedComponents: [.date, .hourAndMinute])
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, Spacing.sm)
             }
             
             GroupBox("Data Types") {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
                     Toggle("Keystrokes", isOn: $exportKeystrokes)
                     Toggle("Mouse Events", isOn: $exportMouse)
                     Toggle("Screenshots", isOn: $exportScreenshots)
@@ -679,7 +679,7 @@ struct ExportDataSheet: View {
                     Toggle("File Access", isOn: $exportFileAccess)
                     Toggle("Clipboard", isOn: $exportClipboard)
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, Spacing.sm)
             }
             
             GroupBox("Format") {
@@ -689,18 +689,18 @@ struct ExportDataSheet: View {
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
-                .padding(.vertical, 8)
+                .padding(.vertical, Spacing.sm)
             }
             
             if showError {
                 Text(errorMessage)
-                    .foregroundColor(.red)
+                    .foregroundStyle(StatusColor.error)
                     .font(.caption)
             }
             
             if showSuccess {
                 Text("Export completed successfully!")
-                    .foregroundColor(.green)
+                    .foregroundStyle(StatusColor.success)
                     .font(.caption)
             }
             
@@ -717,7 +717,7 @@ struct ExportDataSheet: View {
                 .disabled(isExporting || !hasSelectedDataTypes)
             }
         }
-        .padding(30)
+        .padding(Spacing.sheetPadding)
         .frame(width: 400)
     }
     

@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		259B9B6B85D43F736406F99E /* PermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 549D9BE6C7EB108C50A68EC6 /* PermissionsView.swift */; };
 		73026926FD867EF1A3D35372 /* PermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F235604C824512819683F75 /* PermissionsView.swift */; };
+		E80000001000000000000030 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000030 /* DesignTokens.swift */; };
+		E80000001000000000000031 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000031 /* Components.swift */; };
+		E80000001000000000000032 /* EnhancedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000032 /* EnhancedComponents.swift */; };
 		E80000001000000000000001 /* CatchStalkerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000001 /* CatchStalkerApp.swift */; };
 		E80000001000000000000002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000002 /* AppDelegate.swift */; };
 		E80000001000000000000003 /* DatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000002000000000000003 /* DatabaseManager.swift */; };
@@ -39,6 +42,9 @@
 		E80000002000000000000100 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		E80000002000000000000101 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		E80000002000000000000102 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		E80000002000000000000030 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		E80000002000000000000031 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		E80000002000000000000032 /* EnhancedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedComponents.swift; sourceTree = "<group>"; };
 		549D9BE6C7EB108C50A68EC6 /* PermissionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PermissionsView.swift; sourceTree = "<group>"; };
 		6F235604C824512819683F75 /* PermissionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PermissionsView.swift; path = CatchStalker/UI/MainWindow/Permissions/PermissionsView.swift; sourceTree = "<group>"; };
 		E80000002000000000000001 /* CatchStalkerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatchStalkerApp.swift; sourceTree = "<group>"; };
@@ -169,10 +175,21 @@
 		E80000005000000000000007 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				E80000005000000000000025 /* DesignSystem */,
 				E80000005000000000000020 /* MenuBar */,
 				E80000005000000000000021 /* MainWindow */,
 			);
 			path = UI;
+			sourceTree = "<group>";
+		};
+		E80000005000000000000025 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				E80000002000000000000030 /* DesignTokens.swift */,
+				E80000002000000000000031 /* Components.swift */,
+				E80000002000000000000032 /* EnhancedComponents.swift */,
+			);
+			path = DesignSystem;
 			sourceTree = "<group>";
 		};
 		E80000005000000000000008 /* Resources */ = {
@@ -411,6 +428,9 @@
 				E80000001000000000000022 /* CleanupService.swift in Sources */,
 				E80000001000000000000023 /* LaunchAtLoginManager.swift in Sources */,
 				E80000001000000000000024 /* ExportService.swift in Sources */,
+				E80000001000000000000030 /* DesignTokens.swift in Sources */,
+				E80000001000000000000031 /* Components.swift in Sources */,
+				E80000001000000000000032 /* EnhancedComponents.swift in Sources */,
 				73026926FD867EF1A3D35372 /* PermissionsView.swift in Sources */,
 				259B9B6B85D43F736406F99E /* PermissionsView.swift in Sources */,
 			);

@@ -9,15 +9,15 @@ struct DashboardView: View {
     var body: some View {
         ZStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: Spacing.sectionSpacing) {
                     statsGrid
                     
                     ViewThatFits(in: .horizontal) {
-                        HStack(alignment: .top, spacing: 20) {
+                        HStack(alignment: .top, spacing: Spacing.sectionSpacing) {
                             activityChart
                             topAppsView
                         }
-                        VStack(spacing: 16) {
+                        VStack(spacing: Spacing.contentSpacing) {
                             activityChart
                             topAppsView
                         }
@@ -49,12 +49,12 @@ struct DashboardView: View {
     }
     
     private var loadingOverlay: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.md) {
             ProgressView()
                 .scaleEffect(1.5)
             Text("Loading stats...")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)
@@ -62,8 +62,8 @@ struct DashboardView: View {
     
     private var statsGrid: some View {
         LazyVGrid(columns: [
-            GridItem(.adaptive(minimum: 140, maximum: 200), spacing: 16)
-        ], spacing: 16) {
+            GridItem(.adaptive(minimum: 140, maximum: 200), spacing: Spacing.contentSpacing)
+        ], spacing: Spacing.contentSpacing) {
             StatCard(title: "Keystrokes", value: "\(stats.totalKeystrokes)", icon: "keyboard", color: .blue)
             StatCard(title: "Mouse Events", value: "\(stats.totalMouseEvents)", icon: "cursorarrow.motionlines", color: .green)
             StatCard(title: "Screenshots", value: "\(stats.totalScreenshots)", icon: "camera.viewfinder", color: .purple)
@@ -102,7 +102,7 @@ struct DashboardView: View {
                 )
                 .frame(height: 150)
             } else {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
                     ForEach(stats.topApps.prefix(5), id: \.name) { app in
                         HStack {
                             Text(app.name)
@@ -110,7 +110,7 @@ struct DashboardView: View {
                             Spacer()
                             Text(formatDuration(app.duration))
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     Spacer()
@@ -123,8 +123,8 @@ struct DashboardView: View {
     
     private var storageInfo: some View {
         GroupBox("Storage Usage") {
-            HStack(alignment: .top, spacing: 32) {
-                VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: Spacing.xxxl) {
+                VStack(alignment: .leading, spacing: Spacing.md) {
                     storageRow(
                         icon: "internaldrive",
                         label: "Total Used",
@@ -152,7 +152,7 @@ struct DashboardView: View {
                 .buttonStyle(.bordered)
                 .disabled(stats.storageUsed == 0)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
         .frame(maxWidth: .infinity)
         .alert("Clean Up All Data", isPresented: $showCleanupConfirmation) {
@@ -167,12 +167,12 @@ struct DashboardView: View {
     }
     
     private func storageRow(icon: String, label: String, value: Int64) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Spacing.sm) {
             Image(systemName: icon)
-                .foregroundColor(.secondary)
-                .frame(width: 20)
+                .foregroundStyle(.secondary)
+                .frame(width: IconSize.md)
             Text("\(label):")
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Text(formatBytes(value))
                 .fontWeight(.medium)
         }
@@ -180,7 +180,7 @@ struct DashboardView: View {
     
     private var permissionsSection: some View {
         GroupBox("Permissions Status") {
-            HStack(spacing: 20) {
+            HStack(spacing: Spacing.sectionSpacing) {
                 PermissionStatusView(
                     title: "Accessibility",
                     isGranted: PermissionsManager.shared.accessibilityGranted,
@@ -208,7 +208,7 @@ struct DashboardView: View {
                     }
                 )
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
     }
     
@@ -272,46 +272,25 @@ struct StatCard: View {
     @State private var isHovered = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(color.gradient)
-                    .frame(width: 36, height: 36)
-                    .overlay(
-                        Image(systemName: icon)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                    )
-                
+                IconBadge(icon: icon, color: color)
                 Spacer()
             }
             
             Spacer()
             
             Text(value)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
+                .font(.title2)
+                .fontWeight(.bold)
+                .fontDesign(.rounded)
+                .foregroundStyle(.primary)
             
             Text(title)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .padding()
-        .frame(maxWidth: .infinity, minHeight: 120)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.regularMaterial)
-                .shadow(color: .black.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: isHovered ? 4 : 2)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(color.opacity(isHovered ? 0.3 : 0.1), lineWidth: 1)
-        )
-        .scaleEffect(isHovered ? 1.02 : 1.0)
-        .animation(.easeOut(duration: 0.2), value: isHovered)
-        .onHover { hovering in
-            isHovered = hovering
-        }
+        .statCardStyle(color: color)
     }
 }
 
@@ -321,10 +300,10 @@ struct PermissionStatusView: View {
     let action: () -> Void
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Spacing.sm) {
             Image(systemName: isGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .font(.title)
-                .foregroundColor(isGranted ? .green : .red)
+                .foregroundStyle(isGranted ? StatusColor.success : StatusColor.error)
             
             Text(title)
                 .font(.caption)
@@ -355,7 +334,7 @@ struct ActivityChartView: View {
                 y: .value("Keystrokes", item.count)
             )
             .foregroundStyle(Color.accentColor.gradient)
-            .cornerRadius(3)
+            .cornerRadius(CornerRadius.sm)
         }
         .chartXAxis {
             AxisMarks(values: [0, 6, 12, 18, 23]) { value in
@@ -394,25 +373,25 @@ struct EmptyStateView: View {
     var action: (() -> Void)? = nil
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.md) {
             Image(systemName: icon)
-                .font(.system(size: 36))
+                .font(.system(size: IconSize.xl))
                 .foregroundStyle(.tertiary)
             
             Text(title)
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             Text(message)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             
-            if let actionTitle, let action {
+            if let actionTitle = actionTitle, let action = action {
                 Button(actionTitle, action: action)
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
-                    .padding(.top, 4)
+                    .padding(.top, Spacing.xs)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

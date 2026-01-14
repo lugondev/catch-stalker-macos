@@ -5,7 +5,7 @@ struct PermissionsView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: Spacing.xxl) {
                 headerSection
                 permissionCardsSection
                 modulePermissionMappingSection
@@ -19,11 +19,11 @@ struct PermissionsView: View {
     }
     
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
                 Image(systemName: permissions.allPermissionsGranted ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
                     .font(.largeTitle)
-                    .foregroundColor(permissions.allPermissionsGranted ? .green : .orange)
+                    .foregroundStyle(permissions.allPermissionsGranted ? StatusColor.success : StatusColor.warning)
                 
                 VStack(alignment: .leading) {
                     Text(permissions.allPermissionsGranted ? "All Permissions Granted" : "Some Permissions Required")
@@ -31,21 +31,21 @@ struct PermissionsView: View {
                         .fontWeight(.semibold)
                     
                     Text("CatchStalker needs certain permissions to function properly")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             
             if !permissions.allPermissionsGranted {
                 Text("Modules without required permissions will be disabled until you grant access.")
                     .font(.callout)
-                    .foregroundColor(.orange)
-                    .padding(.top, 4)
+                    .foregroundStyle(StatusColor.warning)
+                    .padding(.top, Spacing.xs)
             }
         }
     }
     
     private var permissionCardsSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Spacing.contentSpacing) {
             PermissionCard(
                 title: "Accessibility",
                 description: "Required for capturing keyboard and mouse events. Also enable Input Monitoring in System Settings.",
@@ -101,7 +101,7 @@ struct PermissionsView: View {
     
     private var modulePermissionMappingSection: some View {
         GroupBox("Module Permission Requirements") {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
                 ModulePermissionRow(
                     moduleName: "Keystroke Logger",
                     moduleIcon: "keyboard",
@@ -163,7 +163,7 @@ struct PermissionsView: View {
                     isEnabled: true
                 )
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
     }
 }
@@ -177,46 +177,44 @@ struct PermissionCard: View {
     let onRequest: () -> Void
     let onOpenSettings: () -> Void
     
+    @State private var isHovered = false
+    
     var body: some View {
         GroupBox {
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: Spacing.contentSpacing) {
                 Image(systemName: icon)
-                    .font(.system(size: 36))
-                    .foregroundColor(isGranted ? .green : .orange)
+                    .font(.system(size: IconSize.xl))
+                    .foregroundStyle(isGranted ? StatusColor.success : StatusColor.warning)
                     .frame(width: 50)
                 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
                     HStack {
                         Text(title)
                             .font(.headline)
                         
                         Spacer()
                         
-                        HStack(spacing: 4) {
+                        HStack(spacing: Spacing.xs) {
                             Image(systemName: isGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundColor(isGranted ? .green : .red)
+                                .foregroundStyle(isGranted ? StatusColor.success : StatusColor.error)
                             Text(isGranted ? "Granted" : "Not Granted")
                                 .font(.caption)
-                                .foregroundColor(isGranted ? .green : .red)
+                                .foregroundStyle(isGranted ? StatusColor.success : StatusColor.error)
                         }
                     }
                     
                     Text(description)
                         .font(.callout)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     
                     HStack {
                         Text("Required by:")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         ForEach(requiredBy, id: \.self) { module in
                             Text(module)
-                                .font(.caption)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
-                                .background(Color.accentColor.opacity(0.2))
-                                .cornerRadius(4)
+                                .badgeStyle()
                         }
                     }
                     
@@ -232,12 +230,15 @@ struct PermissionCard: View {
                             }
                             .buttonStyle(.bordered)
                         }
-                        .padding(.top, 4)
+                        .padding(.top, Spacing.xs)
                     }
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
         }
+        .scaleEffect(isHovered ? 1.005 : 1.0)
+        .animation(AppAnimation.fast, value: isHovered)
+        .onHover { isHovered = $0 }
     }
 }
 
@@ -250,8 +251,8 @@ struct ModulePermissionRow: View {
     var body: some View {
         HStack {
             Image(systemName: moduleIcon)
-                .foregroundColor(isEnabled ? .accentColor : .gray)
-                .frame(width: 24)
+                .foregroundStyle(isEnabled ? .accentColor : StatusColor.inactive)
+                .frame(width: IconSize.lg)
             
             Text(moduleName)
                 .fontWeight(.medium)
@@ -260,14 +261,14 @@ struct ModulePermissionRow: View {
             
             Text(requiredPermission)
                 .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, Spacing.sm)
+                .padding(.vertical, Spacing.xxs)
                 .background(Color.secondary.opacity(0.2))
-                .cornerRadius(4)
+                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.sm))
             
             Image(systemName: isEnabled ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundColor(isEnabled ? .green : .red)
+                .foregroundStyle(isEnabled ? StatusColor.success : StatusColor.error)
         }
     }
 }

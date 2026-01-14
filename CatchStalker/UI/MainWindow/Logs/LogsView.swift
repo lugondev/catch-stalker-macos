@@ -99,7 +99,7 @@ struct LogsView: View {
     private var filterBar: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             TextField("Search...", text: $searchText)
                 .textFieldStyle(.plain)
@@ -134,7 +134,7 @@ struct LogsView: View {
                     .frame(width: 100)
                 
                 Text("to")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 DatePicker("", selection: $customEndDate, displayedComponents: .date)
                     .labelsHidden()
@@ -221,13 +221,13 @@ struct KeystrokesLogView: View {
                 
                 TableColumn("Modifiers") { (event: KeystrokeEvent) in
                     Text(event.modifiers.description)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .width(min: 80, ideal: 100)
                 
                 TableColumn("App") { (event: KeystrokeEvent) in
                     Text(event.activeApp ?? "-")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             
@@ -242,7 +242,7 @@ struct KeystrokesLogView: View {
         HStack {
             Text("\(filteredEvents.count) items")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Spacer()
             
@@ -262,7 +262,7 @@ struct KeystrokesLogView: View {
             .buttonStyle(.bordered)
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
     }
     
@@ -359,7 +359,7 @@ struct MouseLogView: View {
                 
                 TableColumn("App") { (event: MouseEvent) in
                     Text(event.activeApp ?? "-")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             
@@ -374,7 +374,7 @@ struct MouseLogView: View {
         HStack {
             Text("\(filteredEvents.count) items")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Spacer()
             Button(action: previousPage) {
                 Image(systemName: "chevron.left")
@@ -390,7 +390,7 @@ struct MouseLogView: View {
             .buttonStyle(.bordered)
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
     }
     
@@ -441,7 +441,7 @@ struct ScreenshotsLogView: View {
                             .font(.caption)
                         Text("\(event.width) x \(event.height)")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .tag(event)
                 }
@@ -455,19 +455,19 @@ struct ScreenshotsLogView: View {
                                 .aspectRatio(contentMode: .fit)
                         } else {
                             Text("Image not found")
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         
                         Text(event.filePath)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
                     }
                     .padding()
                 } else {
                     Text("Select a screenshot to preview")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
@@ -483,7 +483,7 @@ struct ScreenshotsLogView: View {
         HStack {
             Text("\(events.count) items")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Spacer()
             Button(action: previousPage) { Image(systemName: "chevron.left") }
                 .disabled(currentPage == 0)
@@ -494,7 +494,7 @@ struct ScreenshotsLogView: View {
                 .buttonStyle(.bordered)
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
     }
     
@@ -541,7 +541,7 @@ struct CameraLogView: View {
                             .font(.caption)
                         Text(event.deviceName ?? "Unknown camera")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .tag(event)
                 }
@@ -555,13 +555,13 @@ struct CameraLogView: View {
                                 .aspectRatio(contentMode: .fit)
                         } else {
                             Text("Image not found")
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding()
                 } else {
                     Text("Select a capture to preview")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
@@ -577,7 +577,7 @@ struct CameraLogView: View {
         HStack {
             Text("\(events.count) items")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Spacer()
             Button(action: previousPage) { Image(systemName: "chevron.left") }
                 .disabled(currentPage == 0)
@@ -588,7 +588,7 @@ struct CameraLogView: View {
                 .buttonStyle(.bordered)
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
     }
     
@@ -641,7 +641,7 @@ struct AppHistoryLogView: View {
                 
                 TableColumn("Event") { (event: AppHistoryEvent) in
                     Text(event.eventType.rawValue)
-                        .foregroundColor(event.eventType == .activated ? .green : .orange)
+                        .foregroundStyle(event.eventType == .activated ? StatusColor.success : StatusColor.warning)
                 }
                 .width(min: 80, ideal: 100)
                 
@@ -656,7 +656,7 @@ struct AppHistoryLogView: View {
                 
                 TableColumn("Window") { (event: AppHistoryEvent) in
                     Text(event.windowTitle ?? "-")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -672,7 +672,7 @@ struct AppHistoryLogView: View {
         HStack {
             Text("\(filteredEvents.count) items")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Spacer()
             Button(action: previousPage) { Image(systemName: "chevron.left") }
                 .disabled(currentPage == 0)
@@ -683,7 +683,7 @@ struct AppHistoryLogView: View {
                 .buttonStyle(.bordered)
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
     }
     
@@ -757,7 +757,7 @@ struct FileAccessLogView: View {
                 
                 TableColumn("Path") { (event: FileAccessEvent) in
                     Text(event.filePath)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
@@ -774,7 +774,7 @@ struct FileAccessLogView: View {
         HStack {
             Text("\(filteredEvents.count) items")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Spacer()
             Button(action: previousPage) { Image(systemName: "chevron.left") }
                 .disabled(currentPage == 0)
@@ -785,7 +785,7 @@ struct FileAccessLogView: View {
                 .buttonStyle(.bordered)
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
     }
     
@@ -851,13 +851,13 @@ struct ClipboardLogView: View {
                 
                 TableColumn("Size") { (event: ClipboardEvent) in
                     Text(ByteCountFormatter.string(fromByteCount: Int64(event.dataSize), countStyle: .file))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .width(min: 80, ideal: 100)
                 
                 TableColumn("Source") { (event: ClipboardEvent) in
                     Text(event.sourceApp ?? "-")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .width(min: 100, ideal: 150)
             }
@@ -873,7 +873,7 @@ struct ClipboardLogView: View {
         HStack {
             Text("\(filteredEvents.count) items")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Spacer()
             Button(action: previousPage) { Image(systemName: "chevron.left") }
                 .disabled(currentPage == 0)
@@ -884,7 +884,7 @@ struct ClipboardLogView: View {
                 .buttonStyle(.bordered)
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
     }
     

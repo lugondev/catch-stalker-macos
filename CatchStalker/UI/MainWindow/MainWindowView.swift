@@ -54,23 +54,25 @@ struct MainWindowView: View {
     }
 }
 
+// MARK: - Password Prompt View
+
 struct PasswordPromptView: View {
     @Binding var isUnlocked: Bool
     @State private var password = ""
     @State private var showError = false
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Spacing.xl) {
             Image(systemName: "lock.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.accentColor)
+                .font(.system(size: IconSize.xxxl))
+                .foregroundStyle(Color.accentColor)
             
             Text("CatchStalker is Protected")
                 .font(.title2)
                 .fontWeight(.semibold)
             
             Text("Enter your password to view data")
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             SecureField("Password", text: $password)
                 .textFieldStyle(.roundedBorder)
@@ -79,7 +81,7 @@ struct PasswordPromptView: View {
             
             if showError {
                 Text("Incorrect password")
-                    .foregroundColor(.red)
+                    .foregroundStyle(StatusColor.error)
                     .font(.caption)
             }
             
@@ -87,13 +89,13 @@ struct PasswordPromptView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(password.isEmpty)
         }
-        .padding(40)
+        .padding(Spacing.xxxl + Spacing.sm)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     private func verifyPassword() {
         if PasswordManager.shared.verifyPassword(password) {
-            withAnimation {
+            withAnimation(AppAnimation.standard) {
                 isUnlocked = true
             }
         } else {
