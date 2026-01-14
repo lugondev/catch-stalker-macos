@@ -83,4 +83,13 @@ final class SettingsManager: ObservableObject {
         settings = AppSettings.default
         ensureStorageDirectories()
     }
+    
+    func triggerSave() {
+        let current = settings
+        settings = current
+    }
+    
+    func saveImmediately() {
+        save(settings)
+    }
 }

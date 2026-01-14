@@ -38,9 +38,10 @@ struct MenuBarView: View {
     
     private var headerSection: some View {
         HStack {
-            Image(systemName: "eye.fill")
-                .font(.title2)
-                .foregroundColor(.accentColor)
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 24, height: 24)
             
             Text("CatchStalker")
                 .font(.headline)
@@ -89,6 +90,7 @@ struct MenuBarView: View {
             ) { enabled in
                 if enabled { KeystrokeLogger.shared.start() }
                 else { KeystrokeLogger.shared.stop() }
+                settings.saveImmediately()
             }
             
             ModuleToggle(
@@ -101,6 +103,7 @@ struct MenuBarView: View {
             ) { enabled in
                 if enabled { MouseTracker.shared.start() }
                 else { MouseTracker.shared.stop() }
+                settings.saveImmediately()
             }
             
             ModuleToggle(
@@ -113,6 +116,7 @@ struct MenuBarView: View {
             ) { enabled in
                 if enabled { ScreenshotCapture.shared.start() }
                 else { ScreenshotCapture.shared.stop() }
+                settings.saveImmediately()
             }
             
             ModuleToggle(
@@ -125,6 +129,7 @@ struct MenuBarView: View {
             ) { enabled in
                 if enabled { CameraCapture.shared.start() }
                 else { CameraCapture.shared.stop() }
+                settings.saveImmediately()
             }
             
             ModuleToggle(
@@ -137,6 +142,7 @@ struct MenuBarView: View {
             ) { enabled in
                 if enabled { AppHistoryTracker.shared.start() }
                 else { AppHistoryTracker.shared.stop() }
+                settings.saveImmediately()
             }
             
             ModuleToggle(
@@ -149,6 +155,7 @@ struct MenuBarView: View {
             ) { enabled in
                 if enabled { FileAccessMonitor.shared.start() }
                 else { FileAccessMonitor.shared.stop() }
+                settings.saveImmediately()
             }
             
             ModuleToggle(
@@ -161,6 +168,7 @@ struct MenuBarView: View {
             ) { enabled in
                 if enabled { ClipboardMonitor.shared.start() }
                 else { ClipboardMonitor.shared.stop() }
+                settings.saveImmediately()
             }
         }
     }

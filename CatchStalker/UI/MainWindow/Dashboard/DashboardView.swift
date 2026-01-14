@@ -22,9 +22,14 @@ struct DashboardView: View {
                         }
                     }
                     
-                    HStack(spacing: 20) {
-                        storageInfo
-                        Spacer()
+                    ViewThatFits(in: .horizontal) {
+                        HStack(alignment: .top, spacing: 20) {
+                            storageInfo
+                            Spacer()
+                        }
+                        VStack(spacing: 16) {
+                            storageInfo
+                        }
                     }
                     
                     permissionsSection
@@ -125,20 +130,22 @@ struct DashboardView: View {
     
     private var storageInfo: some View {
         GroupBox("Storage Usage") {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Image(systemName: "internaldrive")
-                    Text("Total Used: \(formatBytes(stats.storageUsed))")
-                }
-                
-                HStack {
-                    Image(systemName: "camera.viewfinder")
-                    Text("Screenshots: \(formatBytes(getDirectorySize(SettingsManager.shared.settings.screenshotStoragePath)))")
-                }
-                
-                HStack {
-                    Image(systemName: "camera.fill")
-                    Text("Camera: \(formatBytes(getDirectorySize(SettingsManager.shared.settings.cameraStoragePath)))")
+            HStack(alignment: .top, spacing: 32) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Image(systemName: "internaldrive")
+                        Text("Total Used: \(formatBytes(stats.storageUsed))")
+                    }
+                    
+                    HStack {
+                        Image(systemName: "camera.viewfinder")
+                        Text("Screenshots: \(formatBytes(getDirectorySize(SettingsManager.shared.settings.screenshotStoragePath)))")
+                    }
+                    
+                    HStack {
+                        Image(systemName: "camera.fill")
+                        Text("Camera: \(formatBytes(getDirectorySize(SettingsManager.shared.settings.cameraStoragePath)))")
+                    }
                 }
                 
                 Spacer()
@@ -149,9 +156,9 @@ struct DashboardView: View {
                 }
                 .buttonStyle(.bordered)
             }
-            .frame(height: 150)
+            .padding(.vertical, 8)
         }
-        .frame(minWidth: 200, maxWidth: 300)
+        .frame(maxWidth: .infinity)
     }
     
     private var permissionsSection: some View {

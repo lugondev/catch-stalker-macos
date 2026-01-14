@@ -146,7 +146,7 @@ else
         echo ""
         echo "To run the app:"
         echo "  open \"${APP_PATH}\""
-        echo "cp -R \"${APP_PATH}\" /Applications/"
+        echo "  cp -R \"${APP_PATH}\" /Applications/"
     else
         print_error "Build completed but app not found"
         exit 1

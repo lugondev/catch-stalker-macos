@@ -180,9 +180,9 @@ final class DatabaseManager {
             var statement: OpaquePointer?
             
             if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
-                sqlite3_bind_text(statement, 1, event.id.uuidString, -1, nil)
+                sqlite3_bind_text(statement, 1, (event.id.uuidString as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_double(statement, 2, event.timestamp.timeIntervalSince1970)
-                sqlite3_bind_text(statement, 3, event.eventType.rawValue, -1, nil)
+                sqlite3_bind_text(statement, 3, (event.eventType.rawValue as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_double(statement, 4, event.x)
                 sqlite3_bind_double(statement, 5, event.y)
                 if let button = event.button {
@@ -196,12 +196,17 @@ final class DatabaseManager {
                     sqlite3_bind_null(statement, 7)
                 }
                 if let app = event.activeApp {
-                    sqlite3_bind_text(statement, 8, app, -1, nil)
+                    sqlite3_bind_text(statement, 8, (app as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 } else {
                     sqlite3_bind_null(statement, 8)
                 }
                 
-                sqlite3_step(statement)
+                let result = sqlite3_step(statement)
+                if result != SQLITE_DONE {
+                    print("[DatabaseManager] ERROR: Failed to insert mouse event - \(String(cString: sqlite3_errmsg(db)))")
+                }
+            } else {
+                print("[DatabaseManager] ERROR: Failed to prepare mouse event insert - \(String(cString: sqlite3_errmsg(db)))")
             }
             sqlite3_finalize(statement)
         }
@@ -215,19 +220,24 @@ final class DatabaseManager {
             var statement: OpaquePointer?
             
             if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
-                sqlite3_bind_text(statement, 1, event.id.uuidString, -1, nil)
+                sqlite3_bind_text(statement, 1, (event.id.uuidString as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_double(statement, 2, event.timestamp.timeIntervalSince1970)
-                sqlite3_bind_text(statement, 3, event.filePath, -1, nil)
+                sqlite3_bind_text(statement, 3, (event.filePath as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_int(statement, 4, Int32(event.displayID))
                 sqlite3_bind_int(statement, 5, Int32(event.width))
                 sqlite3_bind_int(statement, 6, Int32(event.height))
                 if let app = event.activeApp {
-                    sqlite3_bind_text(statement, 7, app, -1, nil)
+                    sqlite3_bind_text(statement, 7, (app as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 } else {
                     sqlite3_bind_null(statement, 7)
                 }
                 
-                sqlite3_step(statement)
+                let result = sqlite3_step(statement)
+                if result != SQLITE_DONE {
+                    print("[DatabaseManager] ERROR: Failed to insert screenshot - \(String(cString: sqlite3_errmsg(db)))")
+                }
+            } else {
+                print("[DatabaseManager] ERROR: Failed to prepare screenshot insert - \(String(cString: sqlite3_errmsg(db)))")
             }
             sqlite3_finalize(statement)
         }
@@ -241,18 +251,23 @@ final class DatabaseManager {
             var statement: OpaquePointer?
             
             if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
-                sqlite3_bind_text(statement, 1, event.id.uuidString, -1, nil)
+                sqlite3_bind_text(statement, 1, (event.id.uuidString as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_double(statement, 2, event.timestamp.timeIntervalSince1970)
-                sqlite3_bind_text(statement, 3, event.filePath, -1, nil)
+                sqlite3_bind_text(statement, 3, (event.filePath as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_int(statement, 4, Int32(event.width))
                 sqlite3_bind_int(statement, 5, Int32(event.height))
                 if let name = event.deviceName {
-                    sqlite3_bind_text(statement, 6, name, -1, nil)
+                    sqlite3_bind_text(statement, 6, (name as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 } else {
                     sqlite3_bind_null(statement, 6)
                 }
                 
-                sqlite3_step(statement)
+                let result = sqlite3_step(statement)
+                if result != SQLITE_DONE {
+                    print("[DatabaseManager] ERROR: Failed to insert camera capture - \(String(cString: sqlite3_errmsg(db)))")
+                }
+            } else {
+                print("[DatabaseManager] ERROR: Failed to prepare camera capture insert - \(String(cString: sqlite3_errmsg(db)))")
             }
             sqlite3_finalize(statement)
         }
@@ -266,23 +281,28 @@ final class DatabaseManager {
             var statement: OpaquePointer?
             
             if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
-                sqlite3_bind_text(statement, 1, event.id.uuidString, -1, nil)
+                sqlite3_bind_text(statement, 1, (event.id.uuidString as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_double(statement, 2, event.timestamp.timeIntervalSince1970)
-                sqlite3_bind_text(statement, 3, event.bundleIdentifier, -1, nil)
-                sqlite3_bind_text(statement, 4, event.appName, -1, nil)
+                sqlite3_bind_text(statement, 3, (event.bundleIdentifier as NSString).utf8String, -1, SQLITE_TRANSIENT)
+                sqlite3_bind_text(statement, 4, (event.appName as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 if let title = event.windowTitle {
-                    sqlite3_bind_text(statement, 5, title, -1, nil)
+                    sqlite3_bind_text(statement, 5, (title as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 } else {
                     sqlite3_bind_null(statement, 5)
                 }
-                sqlite3_bind_text(statement, 6, event.eventType.rawValue, -1, nil)
+                sqlite3_bind_text(statement, 6, (event.eventType.rawValue as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 if let duration = event.duration {
                     sqlite3_bind_double(statement, 7, duration)
                 } else {
                     sqlite3_bind_null(statement, 7)
                 }
                 
-                sqlite3_step(statement)
+                let result = sqlite3_step(statement)
+                if result != SQLITE_DONE {
+                    print("[DatabaseManager] ERROR: Failed to insert app history - \(String(cString: sqlite3_errmsg(db)))")
+                }
+            } else {
+                print("[DatabaseManager] ERROR: Failed to prepare app history insert - \(String(cString: sqlite3_errmsg(db)))")
             }
             sqlite3_finalize(statement)
         }
@@ -296,18 +316,23 @@ final class DatabaseManager {
             var statement: OpaquePointer?
             
             if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
-                sqlite3_bind_text(statement, 1, event.id.uuidString, -1, nil)
+                sqlite3_bind_text(statement, 1, (event.id.uuidString as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_double(statement, 2, event.timestamp.timeIntervalSince1970)
-                sqlite3_bind_text(statement, 3, event.filePath, -1, nil)
-                sqlite3_bind_text(statement, 4, event.fileName, -1, nil)
-                sqlite3_bind_text(statement, 5, event.eventType.rawValue, -1, nil)
+                sqlite3_bind_text(statement, 3, (event.filePath as NSString).utf8String, -1, SQLITE_TRANSIENT)
+                sqlite3_bind_text(statement, 4, (event.fileName as NSString).utf8String, -1, SQLITE_TRANSIENT)
+                sqlite3_bind_text(statement, 5, (event.eventType.rawValue as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 if let bundleId = event.appBundleIdentifier {
-                    sqlite3_bind_text(statement, 6, bundleId, -1, nil)
+                    sqlite3_bind_text(statement, 6, (bundleId as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 } else {
                     sqlite3_bind_null(statement, 6)
                 }
                 
-                sqlite3_step(statement)
+                let result = sqlite3_step(statement)
+                if result != SQLITE_DONE {
+                    print("[DatabaseManager] ERROR: Failed to insert file access - \(String(cString: sqlite3_errmsg(db)))")
+                }
+            } else {
+                print("[DatabaseManager] ERROR: Failed to prepare file access insert - \(String(cString: sqlite3_errmsg(db)))")
             }
             sqlite3_finalize(statement)
         }
@@ -321,22 +346,27 @@ final class DatabaseManager {
             var statement: OpaquePointer?
             
             if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
-                sqlite3_bind_text(statement, 1, event.id.uuidString, -1, nil)
+                sqlite3_bind_text(statement, 1, (event.id.uuidString as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_double(statement, 2, event.timestamp.timeIntervalSince1970)
-                sqlite3_bind_text(statement, 3, event.contentType.rawValue, -1, nil)
+                sqlite3_bind_text(statement, 3, (event.contentType.rawValue as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 if let text = event.textContent {
-                    sqlite3_bind_text(statement, 4, text, -1, nil)
+                    sqlite3_bind_text(statement, 4, (text as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 } else {
                     sqlite3_bind_null(statement, 4)
                 }
                 sqlite3_bind_int(statement, 5, Int32(event.dataSize))
                 if let app = event.sourceApp {
-                    sqlite3_bind_text(statement, 6, app, -1, nil)
+                    sqlite3_bind_text(statement, 6, (app as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 } else {
                     sqlite3_bind_null(statement, 6)
                 }
                 
-                sqlite3_step(statement)
+                let result = sqlite3_step(statement)
+                if result != SQLITE_DONE {
+                    print("[DatabaseManager] ERROR: Failed to insert clipboard - \(String(cString: sqlite3_errmsg(db)))")
+                }
+            } else {
+                print("[DatabaseManager] ERROR: Failed to prepare clipboard insert - \(String(cString: sqlite3_errmsg(db)))")
             }
             sqlite3_finalize(statement)
         }
