@@ -146,24 +146,17 @@ final class DatabaseManager {
             var statement: OpaquePointer?
             
             if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
-                let idString = event.id.uuidString
-                idString.withCString { cString in
-                    sqlite3_bind_text(statement, 1, cString, -1, SQLITE_TRANSIENT)
-                }
+                sqlite3_bind_text(statement, 1, (event.id.uuidString as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 sqlite3_bind_double(statement, 2, event.timestamp.timeIntervalSince1970)
                 sqlite3_bind_int(statement, 3, Int32(event.keyCode))
                 if let chars = event.characters {
-                    chars.withCString { cString in
-                        sqlite3_bind_text(statement, 4, cString, -1, SQLITE_TRANSIENT)
-                    }
+                    sqlite3_bind_text(statement, 4, (chars as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 } else {
                     sqlite3_bind_null(statement, 4)
                 }
                 sqlite3_bind_int(statement, 5, Int32(event.modifiers.rawValue))
                 if let app = event.activeApp {
-                    app.withCString { cString in
-                        sqlite3_bind_text(statement, 6, cString, -1, SQLITE_TRANSIENT)
-                    }
+                    sqlite3_bind_text(statement, 6, (app as NSString).utf8String, -1, SQLITE_TRANSIENT)
                 } else {
                     sqlite3_bind_null(statement, 6)
                 }
@@ -397,6 +390,33 @@ final class DatabaseManager {
         }
         
         return events
+    }
+    
+    func fetchDistinctApps() -> [String] {
+        var apps: [String] = []
+        let sql = """
+            SELECT DISTINCT active_app FROM keystrokes WHERE active_app IS NOT NULL AND active_app != ''
+            UNION
+            SELECT DISTINCT active_app FROM mouse_events WHERE active_app IS NOT NULL AND active_app != ''
+            UNION
+            SELECT DISTINCT source_app FROM clipboard WHERE source_app IS NOT NULL AND source_app != ''
+        """
+        
+        dbQueue.sync {
+            guard let db = db else { return }
+            var statement: OpaquePointer?
+            
+            if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
+                while sqlite3_step(statement) == SQLITE_ROW {
+                    if let appName = sqlite3_column_text(statement, 0) {
+                        apps.append(String(cString: appName))
+                    }
+                }
+            }
+            sqlite3_finalize(statement)
+        }
+        
+        return apps
     }
     
     func fetchMouseEvents(from: Date? = nil, to: Date? = nil, limit: Int = 1000, offset: Int = 0) -> [MouseEvent] {
@@ -769,8 +789,67 @@ final class DatabaseManager {
                 }
                 sqlite3_finalize(statement)
             }
+            
+            stats.topApps = fetchTopApps(db: db, limit: 10)
+            stats.keystrokesPerHour = fetchKeystrokesPerHour(db: db)
         }
         
         return stats
+    }
+    
+    private func fetchTopApps(db: OpaquePointer, limit: Int) -> [(name: String, duration: TimeInterval)] {
+        var results: [(name: String, duration: TimeInterval)] = []
+        
+        let sql = """
+            SELECT app_name, SUM(duration) as total_duration 
+            FROM app_history 
+            WHERE event_type = 'deactivated' AND duration IS NOT NULL
+            GROUP BY app_name 
+            ORDER BY total_duration DESC 
+            LIMIT ?
+            """
+        
+        var statement: OpaquePointer?
+        if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
+            sqlite3_bind_int(statement, 1, Int32(limit))
+            
+            while sqlite3_step(statement) == SQLITE_ROW {
+                if let appNamePtr = sqlite3_column_text(statement, 0) {
+                    let appName = String(cString: appNamePtr)
+                    let duration = sqlite3_column_double(statement, 1)
+                    results.append((name: appName, duration: duration))
+                }
+            }
+        }
+        sqlite3_finalize(statement)
+        
+        return results
+    }
+    
+    private func fetchKeystrokesPerHour(db: OpaquePointer) -> [Int: Int] {
+        var results: [Int: Int] = [:]
+        
+        let todayStart = Calendar.current.startOfDay(for: Date())
+        let sql = """
+            SELECT CAST(strftime('%H', datetime(timestamp, 'unixepoch', 'localtime')) AS INTEGER) as hour, 
+                   COUNT(*) as count 
+            FROM keystrokes 
+            WHERE timestamp >= ?
+            GROUP BY hour
+            """
+        
+        var statement: OpaquePointer?
+        if sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK {
+            sqlite3_bind_double(statement, 1, todayStart.timeIntervalSince1970)
+            
+            while sqlite3_step(statement) == SQLITE_ROW {
+                let hour = Int(sqlite3_column_int(statement, 0))
+                let count = Int(sqlite3_column_int(statement, 1))
+                results[hour] = count
+            }
+        }
+        sqlite3_finalize(statement)
+        
+        return results
     }
 }

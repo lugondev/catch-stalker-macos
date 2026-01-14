@@ -1,33 +1,70 @@
 import SwiftUI
+import Charts
 
 struct DashboardView: View {
     @State private var stats = DashboardStats()
     @State private var isLoading = true
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                statsGrid
-                
-                HStack(spacing: 20) {
-                    activityChart
-                    storageInfo
+        ZStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    statsGrid
+                    
+                    ViewThatFits(in: .horizontal) {
+                        HStack(alignment: .top, spacing: 20) {
+                            activityChart
+                            topAppsView
+                        }
+                        VStack(spacing: 16) {
+                            activityChart
+                            topAppsView
+                        }
+                    }
+                    
+                    HStack(spacing: 20) {
+                        storageInfo
+                        Spacer()
+                    }
+                    
+                    permissionsSection
                 }
-                
-                permissionsSection
+                .padding()
             }
-            .padding()
+            .opacity(isLoading ? 0.5 : 1.0)
+            .disabled(isLoading)
+            
+            if isLoading {
+                loadingOverlay
+            }
         }
         .navigationTitle("Dashboard")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: loadStats) {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .disabled(isLoading)
+            }
+        }
         .onAppear(perform: loadStats)
+    }
+    
+    private var loadingOverlay: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .scaleEffect(1.5)
+            Text("Loading stats...")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.ultraThinMaterial)
     }
     
     private var statsGrid: some View {
         LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible()),
-            GridItem(.flexible()),
-            GridItem(.flexible())
+            GridItem(.adaptive(minimum: 140, maximum: 200), spacing: 16)
         ], spacing: 16) {
             StatCard(title: "Keystrokes", value: "\(stats.totalKeystrokes)", icon: "keyboard", color: .blue)
             StatCard(title: "Mouse Events", value: "\(stats.totalMouseEvents)", icon: "cursorarrow.motionlines", color: .green)
@@ -41,17 +78,49 @@ struct DashboardView: View {
     }
     
     private var activityChart: some View {
-        GroupBox("Activity Over Time") {
+        GroupBox("Keystrokes Today") {
             if stats.keystrokesPerHour.isEmpty {
-                Text("No activity data yet")
-                    .foregroundColor(.secondary)
-                    .frame(height: 150)
+                EmptyStateView(
+                    icon: "keyboard",
+                    title: "No Activity Yet",
+                    message: "Start typing to see your keystroke activity"
+                )
+                .frame(height: 150)
             } else {
                 ActivityChartView(data: stats.keystrokesPerHour)
                     .frame(height: 150)
             }
         }
         .frame(maxWidth: .infinity)
+    }
+    
+    private var topAppsView: some View {
+        GroupBox("Top Apps by Time Spent") {
+            if stats.topApps.isEmpty {
+                EmptyStateView(
+                    icon: "app.badge",
+                    title: "No Data Yet",
+                    message: "App usage will appear here"
+                )
+                .frame(height: 150)
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(stats.topApps.prefix(5), id: \.name) { app in
+                        HStack {
+                            Text(app.name)
+                                .lineLimit(1)
+                            Spacer()
+                            Text(formatDuration(app.duration))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Spacer()
+                }
+                .frame(height: 150)
+            }
+        }
+        .frame(minWidth: 200, maxWidth: 320)
     }
     
     private var storageInfo: some View {
@@ -82,7 +151,7 @@ struct DashboardView: View {
             }
             .frame(height: 150)
         }
-        .frame(width: 250)
+        .frame(minWidth: 200, maxWidth: 300)
     }
     
     private var permissionsSection: some View {
@@ -139,6 +208,18 @@ struct DashboardView: View {
         return formatter.string(fromByteCount: bytes)
     }
     
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let minutes = (Int(seconds) % 3600) / 60
+        if hours > 0 {
+            return String(format: "%dh %dm", hours, minutes)
+        } else if minutes > 0 {
+            return String(format: "%d min", minutes)
+        } else {
+            return String(format: "%d sec", Int(seconds))
+        }
+    }
+    
     private func getDirectorySize(_ path: String) -> Int64 {
         let fileManager = FileManager.default
         var size: Int64 = 0
@@ -164,23 +245,48 @@ struct StatCard: View {
     let icon: String
     let color: Color
     
+    @State private var isHovered = false
+    
     var body: some View {
-        GroupBox {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(color)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(color.gradient)
+                    .frame(width: 36, height: 36)
+                    .overlay(
+                        Image(systemName: icon)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                    )
                 
-                Text(value)
-                    .font(.title)
-                    .fontWeight(.bold)
-                
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Spacer()
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            
+            Spacer()
+            
+            Text(value)
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+            
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, minHeight: 120)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.regularMaterial)
+                .shadow(color: .black.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: isHovered ? 4 : 2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(color.opacity(isHovered ? 0.3 : 0.1), lineWidth: 1)
+        )
+        .scaleEffect(isHovered ? 1.02 : 1.0)
+        .animation(.easeOut(duration: 0.2), value: isHovered)
+        .onHover { hovering in
+            isHovered = hovering
         }
     }
 }
@@ -212,29 +318,80 @@ struct PermissionStatusView: View {
 struct ActivityChartView: View {
     let data: [Int: Int]
     
+    private var chartData: [HourlyData] {
+        (0..<24).map { hour in
+            HourlyData(hour: hour, count: data[hour] ?? 0)
+        }
+    }
+    
     var body: some View {
-        GeometryReader { geometry in
-            let maxValue = data.values.max() ?? 1
-            let barWidth = geometry.size.width / 24
-            
-            HStack(alignment: .bottom, spacing: 2) {
-                ForEach(0..<24, id: \.self) { hour in
-                    let value = data[hour] ?? 0
-                    let height = maxValue > 0 ? CGFloat(value) / CGFloat(maxValue) * geometry.size.height : 0
-                    
-                    VStack {
-                        Rectangle()
-                            .fill(Color.accentColor.opacity(0.8))
-                            .frame(width: barWidth - 4, height: max(height, 2))
-                        
-                        if hour % 6 == 0 {
-                            Text("\(hour)")
-                                .font(.system(size: 8))
-                                .foregroundColor(.secondary)
-                        }
+        Chart(chartData) { item in
+            BarMark(
+                x: .value("Hour", item.hour),
+                y: .value("Keystrokes", item.count)
+            )
+            .foregroundStyle(Color.accentColor.gradient)
+            .cornerRadius(3)
+        }
+        .chartXAxis {
+            AxisMarks(values: [0, 6, 12, 18, 23]) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
+                    .foregroundStyle(.tertiary)
+                AxisValueLabel {
+                    if let hour = value.as(Int.self) {
+                        Text("\(hour)h")
+                            .font(.caption2)
                     }
                 }
             }
         }
+        .chartYAxis {
+            AxisMarks(position: .leading) { _ in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
+                    .foregroundStyle(.tertiary)
+                AxisValueLabel()
+                    .font(.caption2)
+            }
+        }
+    }
+}
+
+private struct HourlyData: Identifiable {
+    let id = UUID()
+    let hour: Int
+    let count: Int
+}
+
+struct EmptyStateView: View {
+    let icon: String
+    let title: String
+    let message: String
+    var actionTitle: String? = nil
+    var action: (() -> Void)? = nil
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 36))
+                .foregroundStyle(.tertiary)
+            
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.primary)
+            
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            
+            if let actionTitle, let action {
+                Button(actionTitle, action: action)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .padding(.top, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 }

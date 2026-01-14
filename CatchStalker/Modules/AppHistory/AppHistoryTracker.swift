@@ -8,7 +8,8 @@ final class AppHistoryTracker: ObservableObject {
     @Published var currentApp: AppHistoryEvent?
     
     private var observer: NSObjectProtocol?
-    private var lastActivatedApp: String?
+    private var lastActivatedBundleId: String?
+    private var lastActivatedAppName: String?
     private var lastActivationTime: Date?
     
     private init() {}
@@ -41,11 +42,13 @@ final class AppHistoryTracker: ObservableObject {
         }
         observer = nil
         
-        if let lastApp = lastActivatedApp, let lastTime = lastActivationTime {
+        if let bundleId = lastActivatedBundleId, 
+           let appName = lastActivatedAppName,
+           let lastTime = lastActivationTime {
             let duration = Date().timeIntervalSince(lastTime)
             let event = AppHistoryEvent(
-                bundleIdentifier: lastApp,
-                appName: lastApp,
+                bundleIdentifier: bundleId,
+                appName: appName,
                 windowTitle: nil,
                 eventType: .deactivated,
                 duration: duration
@@ -54,21 +57,25 @@ final class AppHistoryTracker: ObservableObject {
         }
         
         isRunning = false
+        print("[AppHistoryTracker] Stopped")
     }
     
     private func handleAppActivation(_ notification: Notification) {
         guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
         
-        if let lastApp = lastActivatedApp, let lastTime = lastActivationTime {
+        if let bundleId = lastActivatedBundleId,
+           let appName = lastActivatedAppName,
+           let lastTime = lastActivationTime {
             let duration = Date().timeIntervalSince(lastTime)
             let deactivateEvent = AppHistoryEvent(
-                bundleIdentifier: lastApp,
-                appName: lastApp,
+                bundleIdentifier: bundleId,
+                appName: appName,
                 windowTitle: nil,
                 eventType: .deactivated,
                 duration: duration
             )
             DatabaseManager.shared.insertAppHistory(deactivateEvent)
+            print("[AppHistoryTracker] \(appName) deactivated after \(String(format: "%.1f", duration))s")
         }
         
         recordAppActivation(app: app)
@@ -78,7 +85,8 @@ final class AppHistoryTracker: ObservableObject {
         let bundleId = app.bundleIdentifier ?? "unknown"
         let appName = app.localizedName ?? "Unknown"
         
-        lastActivatedApp = bundleId
+        lastActivatedBundleId = bundleId
+        lastActivatedAppName = appName
         lastActivationTime = Date()
         
         let event = AppHistoryEvent(
@@ -93,6 +101,7 @@ final class AppHistoryTracker: ObservableObject {
         }
         
         DatabaseManager.shared.insertAppHistory(event)
+        print("[AppHistoryTracker] \(appName) activated")
     }
     
     private func getActiveWindowTitle() -> String? {

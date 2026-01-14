@@ -8,6 +8,8 @@ struct LogsView: View {
     @State private var customEndDate = Date()
     @State private var showCustomDatePicker = false
     @State private var refreshTrigger = UUID()
+    @State private var selectedAppFilter: String = "All Apps"
+    @State private var availableApps: [String] = ["All Apps"]
     
     enum DateRangeOption: String, CaseIterable {
         case last24Hours = "Last 24 Hours"
@@ -105,6 +107,19 @@ struct LogsView: View {
             Divider()
                 .frame(height: 20)
             
+            if selectedLogType == .keystrokes || selectedLogType == .mouse || selectedLogType == .clipboard {
+                Picker("App", selection: $selectedAppFilter) {
+                    ForEach(availableApps, id: \.self) { app in
+                        Text(app).tag(app)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(width: 140)
+                
+                Divider()
+                    .frame(height: 20)
+            }
+            
             Picker("Date Range", selection: $selectedDateRange) {
                 ForEach(DateRangeOption.allCases, id: \.self) { option in
                     Text(option.rawValue).tag(option)
@@ -126,22 +141,39 @@ struct LogsView: View {
                     .frame(width: 100)
             }
             
-            Button(action: { refreshTrigger = UUID() }) {
+            Button(action: { 
+                refreshTrigger = UUID()
+                loadAvailableApps()
+            }) {
                 Image(systemName: "arrow.clockwise")
             }
             .buttonStyle(.bordered)
         }
         .padding()
+        .onAppear {
+            loadAvailableApps()
+        }
+        .onChange(of: selectedLogType) { _ in
+            selectedAppFilter = "All Apps"
+            loadAvailableApps()
+        }
+    }
+    
+    private func loadAvailableApps() {
+        let apps = DatabaseManager.shared.fetchDistinctApps()
+        availableApps = ["All Apps"] + apps.sorted()
     }
     
     @ViewBuilder
     private var logContent: some View {
+        let appFilter = selectedAppFilter == "All Apps" ? nil : selectedAppFilter
+        
         switch selectedLogType {
         case .keystrokes:
-            KeystrokesLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+            KeystrokesLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate, appFilter: appFilter)
                 .id(refreshTrigger)
         case .mouse:
-            MouseLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+            MouseLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate, appFilter: appFilter)
                 .id(refreshTrigger)
         case .screenshots:
             ScreenshotsLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
@@ -156,7 +188,7 @@ struct LogsView: View {
             FileAccessLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
                 .id(refreshTrigger)
         case .clipboard:
-            ClipboardLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+            ClipboardLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate, appFilter: appFilter)
                 .id(refreshTrigger)
         }
     }
@@ -166,6 +198,7 @@ struct KeystrokesLogView: View {
     let searchText: String
     let startDate: Date?
     let endDate: Date?
+    var appFilter: String? = nil
     
     @State private var events: [KeystrokeEvent] = []
     @State private var currentPage = 0
@@ -234,11 +267,20 @@ struct KeystrokesLogView: View {
     }
     
     private var filteredEvents: [KeystrokeEvent] {
-        if searchText.isEmpty { return events }
-        return events.filter { event in
-            event.characters?.localizedCaseInsensitiveContains(searchText) == true ||
-            event.activeApp?.localizedCaseInsensitiveContains(searchText) == true
+        var result = events
+        
+        if let appFilter = appFilter {
+            result = result.filter { $0.activeApp == appFilter }
         }
+        
+        if !searchText.isEmpty {
+            result = result.filter { event in
+                event.characters?.localizedCaseInsensitiveContains(searchText) == true ||
+                event.activeApp?.localizedCaseInsensitiveContains(searchText) == true
+            }
+        }
+        
+        return result
     }
     
     private func resetAndLoad() {
@@ -278,15 +320,26 @@ struct MouseLogView: View {
     let searchText: String
     let startDate: Date?
     let endDate: Date?
+    var appFilter: String? = nil
     
     @State private var events: [MouseEvent] = []
     @State private var currentPage = 0
     @State private var hasMoreData = true
     private let pageSize = 100
     
+    private var filteredEvents: [MouseEvent] {
+        var result = events
+        
+        if let appFilter = appFilter {
+            result = result.filter { $0.activeApp == appFilter }
+        }
+        
+        return result
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
-            Table(events) {
+            Table(filteredEvents) {
                 TableColumn("Time") { (event: MouseEvent) in
                     Text(formatDate(event.timestamp))
                         .font(.caption)
@@ -319,7 +372,7 @@ struct MouseLogView: View {
     
     private var paginationControls: some View {
         HStack {
-            Text("\(events.count) items")
+            Text("\(filteredEvents.count) items")
                 .font(.caption)
                 .foregroundColor(.secondary)
             Spacer()
@@ -770,6 +823,7 @@ struct ClipboardLogView: View {
     let searchText: String
     let startDate: Date?
     let endDate: Date?
+    var appFilter: String? = nil
     
     @State private var events: [ClipboardEvent] = []
     @State private var currentPage = 0
@@ -835,11 +889,20 @@ struct ClipboardLogView: View {
     }
     
     private var filteredEvents: [ClipboardEvent] {
-        if searchText.isEmpty { return events }
-        return events.filter { event in
-            event.textContent?.localizedCaseInsensitiveContains(searchText) == true ||
-            event.sourceApp?.localizedCaseInsensitiveContains(searchText) == true
+        var result = events
+        
+        if let appFilter = appFilter {
+            result = result.filter { $0.sourceApp == appFilter }
         }
+        
+        if !searchText.isEmpty {
+            result = result.filter { event in
+                event.textContent?.localizedCaseInsensitiveContains(searchText) == true ||
+                event.sourceApp?.localizedCaseInsensitiveContains(searchText) == true
+            }
+        }
+        
+        return result
     }
     
     private func resetAndLoad() {
