@@ -110,10 +110,7 @@ if [ "$ARCHIVE" = true ]; then
         -project "${PROJECT_FILE}" \
         -scheme "${SCHEME}" \
         -configuration "${CONFIGURATION}" \
-        -archivePath "${ARCHIVE_PATH}" \
-        CODE_SIGN_IDENTITY="-" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO
+        -archivePath "${ARCHIVE_PATH}"
 
     print_step "Archive created at: ${ARCHIVE_PATH}"
     
@@ -137,10 +134,7 @@ else
         -project "${PROJECT_FILE}" \
         -scheme "${SCHEME}" \
         -configuration "${CONFIGURATION}" \
-        -derivedDataPath "${BUILD_DIR}/DerivedData" \
-        CODE_SIGN_IDENTITY="-" \
-        CODE_SIGNING_REQUIRED=NO \
-        CODE_SIGNING_ALLOWED=NO
+        -derivedDataPath "${BUILD_DIR}/DerivedData"
 
     # Find and report the built app
     APP_PATH=$(find "${BUILD_DIR}/DerivedData" -name "${PROJECT_NAME}.app" -type d | head -1)
@@ -152,6 +146,7 @@ else
         echo ""
         echo "To run the app:"
         echo "  open \"${APP_PATH}\""
+        echo "cp -R \"${APP_PATH}\" /Applications/"
     else
         print_error "Build completed but app not found"
         exit 1

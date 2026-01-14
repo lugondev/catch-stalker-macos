@@ -22,15 +22,37 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	
+	<!-- Menu bar app (no dock icon) -->
 	<key>LSUIElement</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>CatchStalker needs camera access to capture periodic photos for self-surveillance.</string>
-	<key>NSScreenCaptureUsageDescription</key>
-	<string>CatchStalker needs screen recording permission to capture screenshots for self-surveillance.</string>
-	<key>NSAppleEventsUsageDescription</key>
-	<string>CatchStalker needs automation access to monitor app usage.</string>
+	
+	<!-- Application category -->
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	
+	<!-- ============================================== -->
+	<!-- PRIVACY USAGE DESCRIPTIONS                   -->
+	<!-- Required for permission dialogs              -->
+	<!-- ============================================== -->
+	
+	<!-- Camera permission -->
+	<key>NSCameraUsageDescription</key>
+	<string>CatchStalker needs camera access to capture periodic photos for self-surveillance.</string>
+	
+	<!-- Screen Recording permission -->
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>CatchStalker needs screen recording permission to capture screenshots for self-surveillance.</string>
+	
+	<!-- Accessibility permission (for keystroke/mouse monitoring) -->
+	<key>NSAccessibilityUsageDescription</key>
+	<string>CatchStalker needs accessibility access to monitor keyboard and mouse input for self-surveillance.</string>
+	
+	<!-- Apple Events / Automation -->
+	<key>NSAppleEventsUsageDescription</key>
+	<string>CatchStalker needs automation access to monitor application usage.</string>
 </dict>
 </plist>
