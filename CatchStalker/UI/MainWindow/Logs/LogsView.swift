@@ -107,7 +107,7 @@ struct LogsView: View {
             Divider()
                 .frame(height: 20)
             
-            if selectedLogType == .keystrokes || selectedLogType == .mouse || selectedLogType == .clipboard {
+            if selectedLogType == .keystrokes || selectedLogType == .mouse || selectedLogType == .clipboard || selectedLogType == .screenshots {
                 Picker("App", selection: $selectedAppFilter) {
                     ForEach(availableApps, id: \.self) { app in
                         Text(app).tag(app)
@@ -176,7 +176,7 @@ struct LogsView: View {
             MouseLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate, appFilter: appFilter)
                 .id(refreshTrigger)
         case .screenshots:
-            ScreenshotsLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
+            ScreenshotsLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate, appFilter: appFilter)
                 .id(refreshTrigger)
         case .camera:
             CameraLogView(searchText: searchText, startDate: effectiveStartDate, endDate: effectiveEndDate)
@@ -425,6 +425,7 @@ struct ScreenshotsLogView: View {
     let searchText: String
     let startDate: Date?
     let endDate: Date?
+    var appFilter: String? = nil
     
     @State private var events: [ScreenshotEvent] = []
     @State private var selectedEvent: ScreenshotEvent?
@@ -432,16 +433,46 @@ struct ScreenshotsLogView: View {
     @State private var hasMoreData = true
     private let pageSize = 50
     
+    private var filteredEvents: [ScreenshotEvent] {
+        var result = events
+        
+        if let appFilter = appFilter {
+            result = result.filter { $0.activeApp == appFilter }
+        }
+        
+        if !searchText.isEmpty {
+            result = result.filter { event in
+                event.activeApp?.localizedCaseInsensitiveContains(searchText) == true ||
+                event.filePath.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        return result
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             HSplitView {
-                List(events, id: \.id, selection: $selectedEvent) { event in
-                    VStack(alignment: .leading) {
+                List(filteredEvents, id: \.id, selection: $selectedEvent) { event in
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(formatDate(event.timestamp))
                             .font(.caption)
-                        Text("\(event.width) x \(event.height)")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        
+                        HStack {
+                            Text("\(event.width) x \(event.height)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            
+                            if let app = event.activeApp {
+                                Text("•")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Text(app)
+                                    .font(.caption2)
+                                    .foregroundStyle(.blue)
+                                    .lineLimit(1)
+                            }
+                        }
                     }
                     .tag(event)
                 }
@@ -458,11 +489,25 @@ struct ScreenshotsLogView: View {
                                 .foregroundStyle(.secondary)
                         }
                         
-                        Text(event.filePath)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
+                        VStack(alignment: .leading, spacing: 4) {
+                            if let app = event.activeApp {
+                                HStack {
+                                    Text("App:")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(app)
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                            }
+                            
+                            Text(event.filePath)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding()
                 } else {

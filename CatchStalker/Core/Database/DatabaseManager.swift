@@ -429,6 +429,8 @@ final class DatabaseManager {
             UNION
             SELECT DISTINCT active_app FROM mouse_events WHERE active_app IS NOT NULL AND active_app != ''
             UNION
+            SELECT DISTINCT active_app FROM screenshots WHERE active_app IS NOT NULL AND active_app != ''
+            UNION
             SELECT DISTINCT source_app FROM clipboard WHERE source_app IS NOT NULL AND source_app != ''
         """
         
